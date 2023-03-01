@@ -40,9 +40,9 @@ class cliente(models.Model):
     nombre = models.CharField(max_length=200, null=False, blank=False)
     dui = models.CharField(max_length=15, null=False, blank=False)
     nit = models.CharField(max_length=25, null=False, blank=False)
-    direccion = models.CharField(max_length=200, null=False, blank=False)
+    direccion = models.TextField(null=False, blank=False)
     telefono = models.CharField(max_length=25, null=False, blank=False)
-    observacion = models.CharField(max_length=400, null=False, blank=False)
+    observacion = models.TextField(null=True, blank=True)
     tipo_cliente = models.ForeignKey(tipo_cliente,on_delete=models.DO_NOTHING,blank=True,null=True,related_name='tipo')
     zona = models.ForeignKey(zona,on_delete=models.DO_NOTHING,blank=False,null=False,related_name='zonas')
 

@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'user',
     'markdownify',
     'crispy_forms',
+    'widget_tweaks',
+    'django.contrib.postgres',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -114,7 +116,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+NUM_RECS_BY_PAG = 25
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 

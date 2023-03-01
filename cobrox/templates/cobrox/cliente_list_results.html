@@ -1,0 +1,39 @@
+<div class="results">
+{% include 'cobrox/pagination.html' with form_target='cliente-list-filter' %}
+                <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Zona</th>
+                    <th>Teléfono</th>
+                    <th>DUI</th>
+                    <th>NIT</th>
+                    <th>Tipo</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </thead>
+                    <tbody>
+                    {% for obj in object_list %}
+                        <tr>
+                            <td> {{ obj.nombre }}</td>
+                            <td> {{ obj.zona }} </td>
+                            <td> {{ obj.telefono }}</td>
+                            <td> {{ obj.dui }} </td>
+                            <td> {{ obj.nit }} </td>
+                            <td> {{ obj.tipo_cliente }} </td>
+                            {% if view.user_rol_filial.rol.codigo != 'OPE' %}
+                            <td><a href="{% url 'cobrox:ClienteUpdate' pk=obj.id %}" ><span class="badge badge-warning">Actualizar</span></a></td>
+                            <td><a class="confirmacion" href="{% url 'cobrox:ClienteDelete' pk=obj.id %}" ><span class="badge badge-danger">Eliminar</span></a></td>
+                            {% else %}
+                            <td></td>
+                            <td></td>
+                            {% endif %}
+                            {% empty %}
+                            <td> No existen clientes registrados </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+</div>
+

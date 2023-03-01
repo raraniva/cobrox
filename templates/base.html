@@ -60,8 +60,7 @@
                 <li {% block nav-operacion %}{% endblock %}>
                     <a href="#"><i class="fa fa-address-book"></i> <span class="nav-label">Operación</span><span class="fa arrow"></span></a>
                     <ul class="nav nav-second-level collapse">
-                        <li {% block nav-operacion-clientes %}{% endblock %}><a href="/clientes"><i class="fa fa-list-alt"></i>Clientes</a></li>
-                        <li {% block nav-operacion-creditos %}{% endblock %}><a href="/creditos "><i class="fa fa-list-alt"></i>Créditos</a></li>
+                        <li {% block nav-operacion-clientes %}{% endblock %}><a href="{% url 'cobrox:ClienteList' %}"><i class="fa fa-list-alt"></i>Clientes</a></li>
                     </ul>
                 </li>
 
@@ -124,6 +123,8 @@
         <div class="footer">
             <div class="pull-right">
                     Usuario: <strong> {{ request.user.username }} </strong> &nbsp;&nbsp;&nbsp;
+                    Rol: <strong>{% get_rol_by_user request.user.id %}</strong> &nbsp;&nbsp;
+                    Filial: <strong>{% get_filial_by_user request.user.id %}</strong> &nbsp;&nbsp;
                     Conectado a: <strong>
             cobroX</strong>
 

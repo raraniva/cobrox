@@ -62,4 +62,20 @@ urlpatterns = [
        views.TipoclienteDelete.as_view(),
        name='TipoclienteDelete'
        ),
+    path('cliente',
+       views.ClienteList.as_view(),
+       name='ClienteList'
+       ),
+    path('clientelAdd',
+       views.ClienteAdd.as_view(),
+       name='ClienteAdd'
+       ),
+    path('clienteUpdate/<int:pk>',
+       views.ClienteUpdate.as_view(),
+       name='ClienteUpdate'
+       ),
+    path('ClienteDelete/<int:pk>',
+       views.ClienteDelete.as_view(),
+       name='ClienteDelete'
+       ),
     ] + static(settings.MEDIA_URL)
