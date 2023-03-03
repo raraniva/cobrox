@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'markdownify',
     'crispy_forms',
     'widget_tweaks',
+    'django.contrib.humanize',
     'django.contrib.postgres',
     'django.contrib.admin',
     'django.contrib.auth',

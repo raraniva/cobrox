@@ -3,9 +3,9 @@ from django.template import loader
 from django.core.mail import send_mail
 from django.views.generic import (ListView,DetailView,CreateView,UpdateView,DeleteView)
 from django.http import HttpResponseRedirect
-from .models import filial,zona,tipo_cliente,cliente
+from .models import filial,zona,tipo_cliente,cliente,credito
 from .forms import FilialAddForm,\
-    FilialUpdateForm,ZonaAddForm,ZonaUpdateForm,TipoclienteAddForm,TipoclienteUpdateForm,ClienteAddForm,ClienteUpdateForm,ClienteSearchForm
+    FilialUpdateForm,ZonaAddForm,ZonaUpdateForm,TipoclienteAddForm,TipoclienteUpdateForm,ClienteAddForm,ClienteUpdateForm,ClienteSearchForm,CreditoAddForm
 from datetime import timedelta
 from django.views.generic.edit import FormMixin,FormView
 from user.models import user_rol_filial
@@ -14,6 +14,7 @@ from django.urls import reverse_lazy,reverse
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth,TruncDate
 from datetime import datetime
+from datetime import date
 from django.utils.timezone import make_aware
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.files.base import ContentFile
@@ -22,6 +23,7 @@ from django.core.files import File
 from django.contrib import messages
 from django.db import IntegrityError
 from django.http import Http404
+from decimal import Decimal
 
 from django.core.mail import  EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -432,3 +434,161 @@ class ClienteAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
         kwargs = super(ClienteAdd, self).get_form_kwargs()
         kwargs['request'] = self.request
         return kwargs
+
+
+class Credito_clientelist(LoginRequiredMixin, ListView):
+    model = credito
+    template_name = 'cobrox/credito_cliente_list.html'
+    context_object_name = 'credito'
+
+    def get_context_data(self, **kwargs):
+        context = super(Credito_clientelist, self).get_context_data(**kwargs)
+        return context;
+
+    def get_queryset(self):
+        return credito.objects.filter(cliente__id = self.kwargs['pk']).order_by('fechaini').reverse()
+
+    def cliente(self):
+        return cliente.objects.get(pk = self.kwargs['pk'])
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        try:
+            obj = cliente.objects.get(id=self.kwargs['pk'])
+        except ObjectDoesNotExist:
+            raise Http404
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.filial != obj.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
+class CreditoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    form_class = CreditoAddForm
+    template_name = 'cobrox/credito_add_upd.html'
+    success_message = 'Información de Crédito Almacenado Correctamente!!!!'
+
+    def get_success_url(self):
+        return reverse('cobrox:Credito_clientelist',
+                       kwargs={'pk':self.kwargs['pk']}
+                       )
+
+    def form_valid(self, form ):
+        action = self.request.POST.get('action')
+        form = self.form_class(self.request.POST)
+        print('aqui');
+        if action == 'SAVE':
+            with transaction.atomic():
+                cred = form.save(commit=False)
+                print('aqui');
+
+                qtydiascuota, capitalcuota, interescuota, totalcuota, interestotal, otorinterestotal = calculo(
+                    form.cleaned_data['montootorgado'], form.cleaned_data['fechaini'].strftime('%Y-%m-%d'), form.cleaned_data['fechaven'].strftime('%Y-%m-%d'), form.cleaned_data['interespct'])
+                cred.qtydiascuota = qtydiascuota
+                cred.capitalcuota = capitalcuota
+                cred.interescuota = interescuota
+                cred.totalcuota = totalcuota
+                cred.interestotal = interestotal
+                cred.montoyinterestotal = otorinterestotal
+                cred.cuotaspagadas = 0
+                cred.cuotaspendientes =qtydiascuota
+                cred.saldopendiente = otorinterestotal
+                cred.save()
+            return super().form_valid(form)
+        return HttpResponseBadRequest()
+
+    def cliente(self):
+        return cliente.objects.get(pk=self.kwargs['pk'])
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.rol.codigo=='OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_initial(self):
+        return {
+            'cliente':cliente.objects.get(pk=self.kwargs['pk']) ,
+            'tipocredito':0,
+            'estadocredito':0,
+            'qtydiascuota':0,
+            'capitalcuota':0,
+            'interescuota':0,
+            'totalcuota':0,
+            'interestotal':0,
+            'montoyinterestotal':0,
+            'cuotaspagadas':0,
+            'cuotaspendientes':0,
+            'saldopendiente':0,
+        }
+
+
+def calculo(monto, fechaini, fechavenc, interespct):
+
+    qtydiascuota = (datetime.strptime(fechavenc, "%Y-%m-%d") - datetime.strptime(fechaini, "%Y-%m-%d")).days
+    capitalcuota = round(Decimal(monto)/qtydiascuota,2)
+    interescuota = round((Decimal(monto)* (Decimal(interespct)/100))/qtydiascuota,2)
+    totalcuota = round(capitalcuota+interescuota,2)
+    interestotal = round(interescuota*qtydiascuota,2)
+    otorinterestotal = round(Decimal(monto) + interestotal,2)
+    return qtydiascuota, capitalcuota,  interescuota, totalcuota,interestotal,otorinterestotal
+
+
+def vigenciaestadocredito(saldopendiente, fechavenc,estadocredito):
+    hoy = date.today()
+    if hoy > fechavenc and saldopendiente>0 and estadocredito==0:
+        return 1
+    else:
+        return estadocredito
+
+
+def load_calculo_pago(request):
+    montootorgado = request.GET.get('montootorgado')
+    fechaini = request.GET.get('fechaini')
+    fechaven = request.GET.get('fechaven')
+    interespct = request.GET.get('interespct')
+    error = 0
+    if montootorgado == '' or montootorgado is None:
+        error = 1
+        mensaje ="Debe registrar el monto a otorgar"
+    elif Decimal(montootorgado) <= 0:
+        error = 1
+        mensaje = "El monto a otorgar debe ser un valor mayor que 0"
+    elif interespct == '' or interespct is None:
+        error = 1
+        mensaje ="Debe ingresar el porcentaje de interés, Ej: 10 , 15 , 20.."
+    elif Decimal(interespct) <= 0:
+        error = 1
+        mensaje = "El porcentaje de interés debe ser un valor mayor que 0, Ej: 10, 15 , 20.."
+    elif fechaini == '' or fechaini is None:
+        error = 1
+        mensaje = "Debe ingresar fecha de inicio"
+    elif fechaven == '' or fechaven is None:
+        error = 1
+        mensaje = "Debe ingresar fecha de vencimiento"
+    elif fechaini >= fechaven:
+        error = 1
+        mensaje ="La Fecha de Vencimiento debe ser mayor que la Fecha de Inicio "
+
+    else:
+        qtydiascuota, capitalcuota,  interescuota, totalcuota,interestotal,otorinterestotal = calculo(montootorgado, fechaini, fechaven, interespct)
+        return render(request, 'cobrox/credito_calculo_cuota.html', {   'error':error,
+                                                                        'montootorgado':montootorgado,
+                                                                        'fechaini':fechaini,
+                                                                        'fechaven':fechaven,
+                                                                        'interespct': interespct,
+                                                                        'qtydiascuota': qtydiascuota,
+                                                                        'capitalcuota': capitalcuota,
+                                                                        'interescuota': interescuota,
+                                                                        'totalcuota': totalcuota,
+                                                                        'interestotal': interestotal,
+                                                                        'otorinterestotal': otorinterestotal
+                                                                        })
+    return render(request, 'cobrox/credito_calculo_cuota.html', {'error':error,
+                                                                 'mensaje':mensaje
+                                                                 })

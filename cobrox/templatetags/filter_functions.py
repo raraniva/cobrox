@@ -7,6 +7,8 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Avg, Max, Min, Sum
 from user.models import user_rol_filial
+from cobrox.views import vigenciaestadocredito
+
 
 register = template.Library()
 
@@ -17,6 +19,10 @@ def get_rol_by_user(user_id):
     except ObjectDoesNotExist:
         obj = '-'
     return obj
+
+@register.simple_tag
+def revigenciaestadocredito(saldopendiente, fechavenc,estadocredito):
+    return vigenciaestadocredito(saldopendiente, fechavenc, estadocredito)
 
 @register.simple_tag
 def get_filial_by_user(user_id):

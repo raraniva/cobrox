@@ -1,5 +1,5 @@
 from django import forms
-from .models import filial,zona,tipo_cliente,cliente
+from .models import filial,zona,tipo_cliente,cliente,credito
 from django.db.models import Q
 from user.models import user_rol_filial
 
@@ -128,3 +128,34 @@ class ClienteSearchForm(forms.Form):
         if self.cleaned_data['apellidos']:
             return queryset.filter(Q(codigo__unaccent__icontains=self.cleaned_data['apellidos']) | Q(nombre__unaccent__icontains=self.cleaned_data['apellidos']) | Q(nombre__unaccent__icontains=self.cleaned_data['apellidos']))
         return queryset
+
+
+class CreditoAddForm(forms.ModelForm):
+
+    class Meta:
+        model = credito
+        fields = ['cliente','montootorgado','fechaini','fechaven','interespct','qtydiascuota','capitalcuota','interescuota',
+                  'totalcuota','interestotal','montoyinterestotal','cuotaspagadas','cuotaspendientes','saldopendiente','tipocredito','estadocredito']
+        widgets = {
+            'cliente': forms.HiddenInput(),
+            'qtydiascuota': forms.HiddenInput(),
+            'capitalcuota': forms.HiddenInput(),
+            'interescuota': forms.HiddenInput(),
+            'totalcuota': forms.HiddenInput(),
+            'cuotaspagadas': forms.HiddenInput(),
+            'cuotaspendientes': forms.HiddenInput(),
+            'saldopendiente': forms.HiddenInput(),
+            'tipocredito': forms.HiddenInput(),
+            'estadocredito': forms.HiddenInput(),
+            'interestotal': forms.HiddenInput(),
+            'montoyinterestotal': forms.HiddenInput(),
+
+                   }
+        labels = {
+            'montootorgado': 'Digite Monto a Otorgar:',
+            'fechaini': 'Digite Fecha de Inicio:',
+            'fechafin': 'Digite Fecha de Vencimiento:',
+            'interespct': 'Digite Tasa de interés (Ej: 15 , 20):',
+        }
+
+
