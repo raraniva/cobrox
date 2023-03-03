@@ -592,3 +592,38 @@ def load_calculo_pago(request):
     return render(request, 'cobrox/credito_calculo_cuota.html', {'error':error,
                                                                  'mensaje':mensaje
                                                                  })
+
+
+class CreditoDelete(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
+    model = credito
+    success_url = reverse_lazy('cobrox:FilialList')
+
+    def get(self, request, *args, **kwargs):
+        try:
+            obj = credito.objects.get(id=self.kwargs['pk'])
+            clien = obj.cliente
+            obj.delete()
+            messages.success(request, "El crédito ha sido eliminado satisfactoriamente.")
+            my_render = reverse('cobrox:Credito_clientelist',
+                           kwargs={'pk': clien.id}
+                           )
+        except IntegrityError as e:
+            messages.error(request, "El crédito no puede ser eliminado ya que tiene registros asociados")
+            my_render = reverse('cobrox:Credito_clientelist',
+                                kwargs={'pk': clien.id}
+                                )
+        return HttpResponseRedirect(my_render)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        try:
+            obj = credito.objects.get(id=self.kwargs['pk'])
+        except ObjectDoesNotExist:
+            raise Http404
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.filial != obj.cliente.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)

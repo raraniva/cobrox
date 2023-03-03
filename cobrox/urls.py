@@ -86,5 +86,9 @@ urlpatterns = [
        views.CreditoAdd.as_view(),
        name='CreditoAdd'
        ),
+    path('CreditoDelete/<int:pk>',
+       views.CreditoDelete.as_view(),
+       name='CreditoDelete'
+       ),
     path('ajax/load-calculo_pago/', views.load_calculo_pago, name='ajax_load_calculo_pago'),
     ] + static(settings.MEDIA_URL)

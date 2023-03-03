@@ -42,6 +42,7 @@ class cliente(models.Model):
     nit = models.CharField(max_length=25, null=False, blank=False)
     direccion = models.TextField(null=False, blank=False)
     telefono = models.CharField(max_length=25, null=False, blank=False)
+    celular = models.CharField(max_length=25, null=True, blank=True)
     observacion = models.TextField(null=True, blank=True)
     tipo_cliente = models.ForeignKey(tipo_cliente,on_delete=models.DO_NOTHING,blank=True,null=True,related_name='tipo')
     zona = models.ForeignKey(zona,on_delete=models.DO_NOTHING,blank=False,null=False,related_name='zonas')
@@ -95,3 +96,21 @@ class credito(models.Model):
 
     def __str__(self):
         return self.cliente
+
+
+class pagos(models.Model):
+    recibo = 0
+    refinanc = 1
+    tipoingresoc = (
+        (recibo, 'RECIBO COBRO'),
+        (refinanc, 'REFINANCIAMIENTO'),
+    )
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    capital = models.DecimalField(max_digits=10, decimal_places=2)
+    interes = models.DecimalField(max_digits=10, decimal_places=2)
+    cuota = models.DecimalField(max_digits=10, decimal_places=2)
+    recibo = models.CharField(max_length=10, null=False, blank=False)
+    fecha = models.DateField(blank=False, null=False, help_text='Fecha: YYYY-mm-dd')
+    credito = models.ForeignKey(credito, on_delete=models.DO_NOTHING, blank=False, null=False, related_name='credit')
+    tipoingreso = models.PositiveIntegerField(choices=tipoingresoc, null=False,
+                                              help_text='Seleccione el Tipo de Ingreso')

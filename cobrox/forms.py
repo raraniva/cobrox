@@ -49,12 +49,14 @@ class ClienteAddForm(forms.ModelForm):
 
     class Meta:
         model = cliente
-        fields = ['codigo','nombre','dui','nit','direccion','telefono','observacion','tipo_cliente','zona']
+        fields = ['codigo','nombre','dui','nit','direccion','telefono','celular','observacion','tipo_cliente','zona']
         widgets = {
                    'dui': forms.TextInput(attrs={'placeholder': '________-_','data-mask': '99999999-9'}),
                    'telefono': forms.TextInput(attrs={'placeholder': '____-____','data-mask': '9999-9999'}),
+                   'celular': forms.TextInput(attrs={'placeholder': '____-____', 'data-mask': '9999-9999'}),
                    'nit': forms.TextInput(attrs={'placeholder': '____-______-___-_', 'data-mask': '9999-999999-999-9'}),
-                   'observacion': forms.Textarea(attrs={'placeholder': 'Comentarios'}),
+                   'observacion': forms.Textarea(attrs={'placeholder': 'Comentarios','rows': '4'}),
+                   'direccion': forms.Textarea(attrs={'rows': '4'}),
                    }
         labels = {
             'dui': 'Digite el DUI:',
@@ -62,6 +64,7 @@ class ClienteAddForm(forms.ModelForm):
             'nit': 'Digite el NIT:',
             'codigo': 'Código Anterior:',
             'telefono': 'Teléfono:',
+            'celular': 'No Celular:',
             'observacion': 'Observación:',
             'direccion': 'Dirección:',
             'nombre': 'Nombre Completo:',
@@ -85,12 +88,14 @@ class ClienteAddForm(forms.ModelForm):
 class ClienteUpdateForm(forms.ModelForm):
     class Meta:
         model = cliente
-        fields = ['codigo', 'nombre', 'dui', 'nit', 'direccion', 'telefono', 'observacion', 'tipo_cliente', 'zona']
+        fields = ['codigo', 'nombre', 'dui', 'nit', 'direccion', 'telefono','celular', 'observacion', 'tipo_cliente', 'zona']
         widgets = {
             'dui': forms.TextInput(attrs={'placeholder': '________-_', 'data-mask': '99999999-9'}),
             'telefono': forms.TextInput(attrs={'placeholder': '____-____', 'data-mask': '9999-9999'}),
+            'celular': forms.TextInput(attrs={'placeholder': '____-____', 'data-mask': '9999-9999'}),
             'nit': forms.TextInput(attrs={'placeholder': '____-______-___-_', 'data-mask': '9999-999999-999-9'}),
-            'observacion': forms.Textarea(attrs={'placeholder': 'Comentarios'}),
+            'observacion': forms.Textarea(attrs={'placeholder': 'Comentarios','rows': '4'}),
+            'direccion': forms.Textarea(attrs={'rows': '4'}),
         }
         labels = {
             'dui': 'Digite el DUI:',
@@ -101,6 +106,7 @@ class ClienteUpdateForm(forms.ModelForm):
             'observacion': 'Observación:',
             'direccion': 'Dirección:',
             'nombre': 'Nombre Completo:',
+            'celular': 'No Celular:',
             'tipo_cliente': 'Tipo de Cliente:',
 
         }

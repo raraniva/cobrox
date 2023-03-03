@@ -34,7 +34,7 @@
                                 <span class="badge badge-primary"><i class="fa fa-check-circle"></i> Cancelado </span>
                             {% endif %}
                             <br>
-                            <small class="text-navy"> [ <strong> {{ obj.get_tipocredito_display }} </strong> ] </small> <br><br>
+                            <br>
 
                         </div>
                         <div class="col content">
@@ -59,7 +59,9 @@
                                 <p> Interes Total: $ {{ obj.interestotal|intcomma  }}  </p>
                                 <p> Capital Total: $ {{ obj.montootorgado|intcomma  }}  </p>
                                 <p> Total: $ {{ obj.montoyinterestotal|intcomma  }}  </p>
-
+                                <a class="confirmacion_trans" href="{% url 'cobrox:CreditoDelete' pk=obj.id %}"  >
+                                    <span class="badge badge-danger"><h5> <i class="fa fa-times-circle"></i> Borrar Crédito</h5></span>
+                                </a>
                             </div>
                             <div class="media-body text-left ">
 
@@ -101,17 +103,20 @@
                             <p><i class="fa fa-drivers-license"></i>  {{ view.cliente.dui }}</p>
                             <p><i class="fa fa-vcard"></i>  {{ view.cliente.nit }}</p>
                             <p><i class="fa fa-phone"></i>  {{ view.cliente.telefono }}</p>
+                            {% if view.cliente.celular %}
+                                <p><i class="fa fa-mobile"></i>  {{ view.cliente.celular }}</p>
+                            {% endif %}
                             <p><i class="fa fa-tag"></i>  {{ view.cliente.tipo_cliente }}</p>
                             {% if view.cliente.codigo %}
                                 <p><i class="fa fa-archive"></i>  {{ view.cliente.codigo }}</p>
                             {% endif %}
                         </p>
                         <a href="{% url 'cobrox:CreditoAdd' pk=view.cliente.id %}"  >
-                        <span class="badge badge-primary"><h4> <i class="fa fa-plus-circle"></i> Ir Registrar Crédito</h4></span>
+                        <span class="ladda-button badge badge-primary"><h4> <i class="fa fa-plus-circle"></i> Ir Registrar Crédito</h4></span>
                          </a>
                             <p> </p>
                         <a href="{% url 'cobrox:ClienteList' %}"  >
-                        <span class="badge badge-primary"><h4> <i class="fa fa-backward"></i> Regresar a Clientes</h4></span>
+                        <span class="ladda-button badge badge-primary"><h4> <i class="fa fa-backward"></i> Regresar a Clientes</h4></span>
                          </a>
                         <p>
 
