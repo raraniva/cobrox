@@ -59,12 +59,19 @@
                                 <p> Interes Total: $ {{ obj.interestotal|intcomma  }}  </p>
                                 <p> Capital Total: $ {{ obj.montootorgado|intcomma  }}  </p>
                                 <p> Total: $ {{ obj.montoyinterestotal|intcomma  }}  </p>
+                                <a  title="Ver" data-toggle="modal" data-target="#modal-{{ obj.id }}">
+                                    <span class="badge badge-primary"><i class="fa fa-archive"></i>&nbsp; Ver Pagos &nbsp;</span>
+                                </a>
+                                <a href="{% url 'cobrox:PagoAdd' pk=obj.id %}"  >
+                                    <span class="badge badge-info"> <i class="fa fa-times-circle"></i> Ingresar Pago</span>
+                                </a>
+
                                 <a class="confirmacion_trans" href="{% url 'cobrox:CreditoDelete' pk=obj.id %}"  >
-                                    <span class="badge badge-danger"><h5> <i class="fa fa-times-circle"></i> Borrar Crédito</h5></span>
+                                    <span class="badge badge-danger"> <i class="fa fa-times-circle"></i> Borrar Crédito</span>
                                 </a>
                             </div>
                             <div class="media-body text-left ">
-
+                                <br>
                                 <p><strong> Saldo Total Pendiente: $  {{ obj.saldopendiente|intcomma  }}
                                      </strong></p>
 
@@ -137,5 +144,80 @@
 </div>
 </div>
 
+{% for obj in object_list %}
+<div class="modal fade" id="modal-{{ obj.id }}" tabindex="-1" role="dialog" >
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content animated bounceInRight">
+
+          <div class="modal-header">
+
+              <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th><small class="text-navy"><strong>Inicio</strong></small></th>
+                    <th><small class="text-navy"><strong>Vencimiento</strong></small></th>
+                    <th><small class="text-navy"><strong>Días</strong></small></th>
+                    <th><small class="text-navy"><strong>Otorgado</strong></small></th>
+                    <th><small class="text-navy"><strong>Interés</strong></small></th>
+                    <th><small class="text-navy"><strong>Cuotas<br>Pendientes</strong></small></th>
+                    <th><small class="text-navy"><strong>Cuotas<br>Pagadas</strong></small></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><small class="text-navy">{{ obj.fechaini |date:'d-b-Y ' }}</small></td>
+                    <td><small class="text-navy">{{ obj.fechaven |date:'d-b-Y ' }}</small></td>
+                    <td><small class="text-navy">{{ obj.qtydiascuota }}</small></td>
+
+                    <td><small class="text-navy">$ {{ obj.montootorgado|intcomma }}  </small> </td>
+                    <td><small class="text-navy">  {{ obj.interespct|intcomma }}%  </small> </td>
+
+                    <td><small class="text-navy">{{ obj.cuotaspendientes }}  </small> </td>&nbsp;
+                    <td><small class="text-navy">{{  obj.cuotaspagadas  }} &nbsp; </small> </td>
+                </tr>
+                </tbody>
+                </table>
+
+
+
+
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+
+        </div>
+        <div class="modal-body">
+            <div class="row">
+                <div class="col-lg-12">
+
+
+
+                            <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Recibido</th>
+                                <th>Capital</th>
+                                <th>Interés</th>
+                                <th>Cuotas<br> Abonadas</th>
+                                <th>Recibo</th>
+                                <th>Tipo </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% muestra_pagos obj.id %}
+                            </tbody>
+                            </table>
+
+
+                </div>
+
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+</div>
+ {% endfor %}
 {% endblock %}
 

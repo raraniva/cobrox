@@ -1,5 +1,5 @@
 from django import forms
-from .models import filial,zona,tipo_cliente,cliente,credito
+from .models import filial,zona,tipo_cliente,cliente,credito,pago
 from django.db.models import Q
 from user.models import user_rol_filial
 
@@ -165,3 +165,20 @@ class CreditoAddForm(forms.ModelForm):
         }
 
 
+class PagoAddForm(forms.ModelForm):
+
+    class Meta:
+        model = pago
+        fields = ['monto','capital','interes','cuota','recibo','fecha','credito','tipoingreso']
+        widgets = {
+            'capital': forms.HiddenInput(),
+            'interes': forms.HiddenInput(),
+            'cuota': forms.HiddenInput(),
+            'credito': forms.HiddenInput(),
+                   }
+        labels = {
+            'monto': 'Digite Monto Recibido:',
+            'recibo': 'Digite el # de Recibo:',
+            'fecha': 'Seleccione fecha:',
+            'tipoingreso': 'Tipo de Ingreso:',
+        }

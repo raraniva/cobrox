@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Avg, Max, Min, Sum
 from user.models import user_rol_filial
 from cobrox.views import vigenciaestadocredito
+from cobrox.models import pago
 
 
 register = template.Library()
@@ -94,7 +95,25 @@ def dia_semana(dia):
     return dow
 
 
+@register.simple_tag
+def muestra_pagos(pcredito):
+    qs = pago.objects.filter(credito=pcredito).order_by("fecha","id")
 
+    devolver = ""
+    for entry in qs:
 
+        devolver =devolver+ "<tr>" \
+                  "<td>" + entry.fecha.strftime("%Y-%m-%d") +"</td>" \
+                  "<td align='right'> $ " + str(round(entry.monto,2)) + "</td>" \
+                  "<td align='right'> $ " + str(round(entry.capital,2)) + "</td>" \
+                  "<td align='right'> $ " + str(round(entry.interes,2)) + "</td>" \
+                  "<td align='right'> " + str(round(entry.cuota,2)) + "</td>" \
+                  "<td align='right'>" + entry.recibo + "</td>"
+        if entry.tipoingreso == 0:
+            devolver =devolver+"<td>RECIBO</td>"
+        else:
+            devolver = devolver + "<td>REFINANC</td>"
+        devolver =devolver+"<td><a class =\"confirmacion\" href=\"/PagoDelete/"+ str(entry.id)+ "\" ><button type=\"button\" class=\"btn btn-outline btn-danger\"><i class=\"fa fa-times-circle\"></i></button></a></td></tr>"
+    return mark_safe(devolver)
 
 

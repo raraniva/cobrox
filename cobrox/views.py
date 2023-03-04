@@ -3,9 +3,10 @@ from django.template import loader
 from django.core.mail import send_mail
 from django.views.generic import (ListView,DetailView,CreateView,UpdateView,DeleteView)
 from django.http import HttpResponseRedirect
-from .models import filial,zona,tipo_cliente,cliente,credito
+from .models import filial,zona,tipo_cliente,cliente,credito,pago
 from .forms import FilialAddForm,\
-    FilialUpdateForm,ZonaAddForm,ZonaUpdateForm,TipoclienteAddForm,TipoclienteUpdateForm,ClienteAddForm,ClienteUpdateForm,ClienteSearchForm,CreditoAddForm
+    FilialUpdateForm,ZonaAddForm,ZonaUpdateForm,TipoclienteAddForm,\
+    TipoclienteUpdateForm,ClienteAddForm,ClienteUpdateForm,ClienteSearchForm,CreditoAddForm,PagoAddForm
 from datetime import timedelta
 from django.views.generic.edit import FormMixin,FormView
 from user.models import user_rol_filial
@@ -483,7 +484,6 @@ class CreditoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
         if action == 'SAVE':
             with transaction.atomic():
                 cred = form.save(commit=False)
-                print('aqui');
 
                 qtydiascuota, capitalcuota, interescuota, totalcuota, interestotal, otorinterestotal = calculo(
                     form.cleaned_data['montootorgado'], form.cleaned_data['fechaini'].strftime('%Y-%m-%d'), form.cleaned_data['fechaven'].strftime('%Y-%m-%d'), form.cleaned_data['interespct'])
@@ -537,6 +537,25 @@ def calculo(monto, fechaini, fechavenc, interespct):
     interestotal = round(interescuota*qtydiascuota,2)
     otorinterestotal = round(Decimal(monto) + interestotal,2)
     return qtydiascuota, capitalcuota,  interescuota, totalcuota,interestotal,otorinterestotal
+
+
+def calculopago(monto, capitalcuota, interescuota, cuota):
+    cuotas_pag = round(Decimal(monto)/cuota,2)
+    cuotak = round(cuotas_pag*capitalcuota,2)
+    cuotai = round(cuotas_pag*interescuota,2)
+
+    return cuotas_pag, cuotak,  cuotai
+
+
+def actualizacredito(credito,cuotaspag,monto):
+    credito.cuotaspagadas = round(credito.cuotaspagadas + cuotaspag,2);
+    credito.cuotaspendientes = round(credito.cuotaspendientes - cuotaspag,2);
+    credito.saldopendiente = round(credito.saldopendiente - monto,2);
+    if credito.saldopendiente < 0.01 :
+        credito.estadocredito=2;
+    credito.save()
+
+
 
 
 def vigenciaestadocredito(saldopendiente, fechavenc,estadocredito):
@@ -623,6 +642,141 @@ class CreditoDelete(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
             raise Http404
         user_filial = user_rol_filial.objects.get(usuario=self.request.user)
         if user_filial.filial != obj.cliente.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
+class PagoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    form_class = PagoAddForm
+    template_name = 'cobrox/pago_add_upd.html'
+    success_message = 'Información del Pago Almacenado Correctamente!!!!'
+
+    def get_success_url(self):
+        obj=credito.objects.get(pk=self.kwargs['pk'])
+        return reverse('cobrox:Credito_clientelist',
+                       kwargs={'pk':obj.cliente.id}
+                       )
+
+    def form_valid(self, form ):
+        action = self.request.POST.get('action')
+        form = self.form_class(self.request.POST)
+        if action == 'SAVE':
+            pag = form.save(commit=False)
+            with transaction.atomic():
+
+                obj = credito.objects.get(id=self.kwargs['pk'])
+                cuotas_pag, cuotak, cuotai = calculopago(form.cleaned_data['monto'],
+                                                         obj.capitalcuota, obj.interescuota, obj.totalcuota)
+                actualizacredito(obj, cuotas_pag, form.cleaned_data['monto'])
+                pag.capital= cuotai
+                pag.interes= cuotak
+                pag.cuota= cuotas_pag
+                pag.save()
+                return super().form_valid(form)
+        return HttpResponseBadRequest()
+
+    def cliente(self):
+        return credito.objects.get(pk=self.kwargs['pk']).cliente
+
+    def credito(self):
+        return credito.objects.get(pk=self.kwargs['pk'])
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.rol.codigo=='OPE':
+            raise PermissionDenied
+        try:
+            obj = credito.objects.get(id=self.kwargs['pk'])
+        except ObjectDoesNotExist:
+            raise Http404
+        if user_filial.filial != obj.cliente.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_initial(self):
+        return {
+            'credito': credito.objects.get(pk=self.kwargs['pk']),
+            'capital': 0,
+            'interes': 0,
+            'cuota': 0,
+        }
+
+
+def load_calculo_distribucion_pago(request):
+    monto = request.GET.get('monto')
+    creditoid = request.GET.get('credito')
+    fecha = request.GET.get('fecha')
+    recibo = request.GET.get('recibo')
+    tipoingreso = request.GET.get('tipoingreso')
+
+    print(tipoingreso)
+    error = 0
+    obj = credito.objects.get(id=creditoid)
+    if monto == '' or monto is None:
+        error = 1
+        mensaje ="Debe registrar el monto a pagar"
+    elif Decimal(monto) <= 0:
+        error = 1
+        mensaje = "El monto a pagar debe ser un valor mayor que 0"
+    elif tipoingreso == '' or tipoingreso is None:
+        error = 1
+        mensaje ="Debe seleccion el Tipo de ingreso "
+    elif recibo == '' or recibo is None:
+        error = 1
+        mensaje ="Debe registrar el recibo "
+    elif fecha == '' or fecha is None:
+        error = 1
+        mensaje ="Debe registrar la fecha de pago "
+    elif datetime.strptime(fecha, "%Y-%m-%d").date() < obj.fechaini:
+        error = 1
+        mensaje ="La Fecha de Pago debe ser mayor que la Fecha de Inicio "
+    else:
+
+        cuotas_pag, cuotak,  cuotai = calculopago(monto, obj.capitalcuota, obj.interescuota, obj.totalcuota)
+        return render(request, 'cobrox/pago_calculo.html', {'error':error,
+                                    'cuotas_pag':cuotas_pag,
+                                    'cuotak':cuotak,
+                                    'cuotai':cuotai,
+                                    })
+    return render(request, 'cobrox/pago_calculo.html', {'error':error,
+                                                                 'mensaje':mensaje
+                                                               })
+
+
+class PagoDelete(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
+    model = pago
+
+    def get(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                obj = pago.objects.get(id=self.kwargs['pk'])
+                actualizacredito(obj.credito, obj.cuota*-1, obj.monto*-1)
+                obj.delete()
+                messages.success(request, "El pago ha sido eliminado satisfactoriamente.")
+                my_render = reverse('cobrox:Credito_clientelist',
+                               kwargs={'pk': obj.credito.cliente.id}
+                               )
+        except IntegrityError as e:
+            messages.error(request, "El pago no puede ser eliminado ya que tiene registros asociados")
+            my_render = reverse('cobrox:Credito_clientelist',
+                                kwargs={'pk': obj.credito.cliente.id}
+                                )
+        return HttpResponseRedirect(my_render)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        try:
+            obj = pago.objects.get(id=self.kwargs['pk'])
+
+        except ObjectDoesNotExist:
+            raise Http404
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.filial != obj.credito.cliente.zona.filial and not self.request.user.is_staff:
             raise PermissionDenied
         if user_filial.rol.codigo == 'OPE':
             raise PermissionDenied

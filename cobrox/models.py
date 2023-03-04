@@ -98,7 +98,7 @@ class credito(models.Model):
         return self.cliente
 
 
-class pagos(models.Model):
+class pago (models.Model):
     recibo = 0
     refinanc = 1
     tipoingresoc = (

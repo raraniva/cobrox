@@ -25,7 +25,8 @@
                             <td><a href="{% url 'cobrox:ClienteUpdate' pk=obj.id %}" ><button type="button" class="btn btn-outline btn-warning" title='Editar'><i class="fa fa-pencil"></i></button></a>
 
                                  &nbsp;<a  href="{% url 'cobrox:Credito_clientelist' pk=obj.id %}" ><button alt="Ver Créditos" type="button" class="btn btn-outline btn-info" title='Ver Créditos'><i class="fa fa-database"></i></button>
-                                &nbsp;<a class="confirmacion" href="{% url 'cobrox:ClienteDelete' pk=obj.id %}" ><button alt="Eliminar" type="button" class="btn btn-outline btn-danger" title='Eliminar'><i class="fa fa-times-circle"></i></button></td>
+                                &nbsp;<a class="confirmacion" href="{% url 'cobrox:ClienteDelete' pk=obj.id %}" ><button alt="Eliminar" type="button" class="btn btn-outline btn-danger" title='Eliminar'><i class="fa fa-times-circle"></i></button>
+                            </td>
                             {% else %}
                             <td></td>
                             {% endif %}
