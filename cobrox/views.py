@@ -6,7 +6,7 @@ from django.http import HttpResponseRedirect
 from .models import filial,zona,tipo_cliente,cliente,credito,pago
 from .forms import FilialAddForm,\
     FilialUpdateForm,ZonaAddForm,ZonaUpdateForm,TipoclienteAddForm,\
-    TipoclienteUpdateForm,ClienteAddForm,ClienteUpdateForm,ClienteSearchForm,CreditoAddForm,PagoAddForm
+    TipoclienteUpdateForm,ClienteAddForm,ClienteUpdateForm,ClienteSearchForm,CreditoAddForm,PagoAddForm,CreditoSearchForm
 from datetime import timedelta
 from django.views.generic.edit import FormMixin,FormView
 from user.models import user_rol_filial
@@ -86,7 +86,7 @@ class Viewindex(LoginRequiredMixin, ListView):
         pass
 
     def get(self, request, *args, **kwargs):
-        print(self.request.user)
+
         return super().get(request, *args, **kwargs)
 
 
@@ -480,7 +480,7 @@ class CreditoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     def form_valid(self, form ):
         action = self.request.POST.get('action')
         form = self.form_class(self.request.POST)
-        print('aqui');
+
         if action == 'SAVE':
             with transaction.atomic():
                 cred = form.save(commit=False)
@@ -715,7 +715,7 @@ def load_calculo_distribucion_pago(request):
     recibo = request.GET.get('recibo')
     tipoingreso = request.GET.get('tipoingreso')
 
-    print(tipoingreso)
+
     error = 0
     obj = credito.objects.get(id=creditoid)
     if monto == '' or monto is None:
@@ -830,6 +830,95 @@ class CerrarRegistros(LoginRequiredMixin,DetailView):
         if not request.user.is_authenticated:
             return self.handle_no_permission()
         user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
+class CreditoList(LoginRequiredMixin, FormMixin,ListView):
+    paginate_by = getattr(settings, 'NUM_RECS_BY_PAG', None)
+    form_class = CreditoSearchForm
+    template_name = 'cobrox/credito_list.html'
+    ajax_template_name = 'cobrox/credito_list_results.html'
+
+    def get_initial(self):
+        return {
+            'codigo_id': '',
+        }
+
+    def user_rol_filial(self):
+        return user_rol_filial.objects.get(usuario=self.request.user)
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            qry = credito.objects.all().order_by("id")
+        else:
+            obj = user_rol_filial.objects.get(usuario=self.request.user)
+            qry = credito.objects.filter(cliente__zona__filial=obj.filial).order_by("id")
+        return qry
+
+    def get_template_names(self):
+        if self.request.is_ajax():
+            return [self.ajax_template_name]
+        return [self.template_name]
+
+    def get_form_kwargs(self):
+        return {
+            'initial': self.get_initial(),
+            'prefix': self.get_prefix(),
+            'data': self.request.GET or None
+        }
+
+    def get(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        form = self.get_form(self.get_form_class())
+        if form.is_valid():
+            self.object_list = form.filter_queryset(request, self.object_list)
+        context = self.get_context_data(form=form, object_list=self.object_list)
+        return self.render_to_response(context)
+
+    def paginate_queryset(self, queryset, page_size):
+        try:
+            return super(CreditoList, self).paginate_queryset(queryset, page_size)
+        except Http404:
+            self.kwargs['page'] = 'last'
+            return super(CreditoList, self).paginate_queryset(queryset, page_size)
+
+
+class Estado_cuentalist(LoginRequiredMixin, ListView):
+    model = pago
+    template_name = 'cobrox/estado_cuenta.html'
+    context_object_name = 'credito'
+
+    def get_context_data(self, **kwargs):
+        context = super(Estado_cuentalist, self).get_context_data(**kwargs)
+        return context;
+
+    def get_queryset(self):
+        return pago.objects.filter(credito__id = self.kwargs['pk']).order_by('id')
+
+    def cliente(self):
+        ocredito = credito.objects.get(id = self.kwargs['pk'])
+        ocliente = ocredito.cliente
+        return ocliente
+
+    def credito(self):
+        ocredito = credito.objects.get(id = self.kwargs['pk'])
+
+        return ocredito
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        try:
+            ocredito = credito.objects.get(id=self.kwargs['pk'])
+
+            obj = ocredito.cliente
+        except ObjectDoesNotExist:
+            raise Http404
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.filial != obj.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
         if user_filial.rol.codigo == 'OPE':
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)

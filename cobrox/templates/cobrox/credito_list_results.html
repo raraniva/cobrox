@@ -1,0 +1,71 @@
+{% load humanize %}
+<div class="results">
+{% include 'cobrox/pagination.html' with form_target='credito-list-filter' %}
+                <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tipo</th>
+                    <th>Cliente</th>
+                    <th>Fecha <br> Inicio</th>
+                    <th>Fecha <br> Vcto.</th>
+                    <th>Qty <br>Cuotas </th>
+                    <th>Tasa <br> interés</th>
+                    <th>Monto <br>Otorgado</th>
+                    <th>Total <br>Intereses</th>
+                    <th>Total <br> Pagar</th>
+                    <th>Cuota</th>
+                    <th>Cuotas <br>Pendientes </th>
+                    <th>Saldo <br>Pendiente</th>
+                    <th>Operación</th>
+                </tr>
+                </thead>
+                    <tbody>
+                    {% for obj in object_list %}
+                        <tr>
+                            <td> {{ obj.id|stringformat:"06d" }}</td>
+                            <td>
+
+                               {% if obj.tipocredito == 0 %}
+                                    <span class="badge badge-primary">C</span>&nbsp;{{ obj.get_tipocredito_display }}
+                                {% else %}
+                                    <span class="badge badge-success">R</span>&nbsp;{{ obj.get_tipocredito_display }}
+                                {% endif %}
+
+                            </td>
+                            <td> {{ obj.cliente.nombre }} </td>
+                            <td> {{ obj.fechaini }} </td>
+                            <td> {{ obj.fechaven }} </td>
+                            <td> {{ obj.qtydiascuota }} </td>
+                            <td> {{ obj.interespct }} % </td>
+                            <td align="right">$ {{ obj.montootorgado|intcomma }}</td>
+                            <td align="right">$ {{ obj.interestotal|intcomma }}</td>
+                            <td align="right">$ {{ obj.montoyinterestotal|intcomma }}</td>
+                            <td align="right">$ {{ obj.totalcuota }} </td>
+                            <td align="right"> {{ obj.cuotaspendientes}} </td>
+                            <td align="right">$ {{ obj.saldopendiente }} </td>
+                            <td>
+
+                            <a href="{% url 'cobrox:EstadoCuenta' pk=obj.id %}"  >
+                            <button type="button" class="btn btn-outline btn-primary" title='Estado Cuenta'>
+
+                                     <i class="fa fa-archive"></i>
+
+                            </button></a>
+                            &nbsp;
+                            <a href="{% url 'cobrox:PagoAdd' pk=obj.id %}"  >
+                                <button type="button" class="btn btn-outline btn-primary" title='Ingresar Pago'>
+
+                                     <i class="fa fa-credit-card"></i>
+
+                            </button>
+                                </a>
+                                </td>
+                            {% empty %}
+                            <td> No existen créditos registrados </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+</div>
+

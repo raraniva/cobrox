@@ -136,6 +136,15 @@ class ClienteSearchForm(forms.Form):
         return queryset
 
 
+class CreditoSearchForm(forms.Form):
+    codigo_id = forms.CharField (required=False)
+
+    def filter_queryset(self, request, queryset):
+        if self.cleaned_data['codigo_id']:
+            return queryset.filter(Q(id=self.cleaned_data['codigo_id']) | Q(codigo__unaccent__icontains=self.cleaned_data['codigo_id']))
+        return queryset
+
+
 class CreditoAddForm(forms.ModelForm):
 
     class Meta:
