@@ -640,6 +640,8 @@ class CreditoDelete(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
             obj = credito.objects.get(id=self.kwargs['pk'])
         except ObjectDoesNotExist:
             raise Http404
+        if obj.estadoregistro == 1:
+            raise PermissionDenied
         user_filial = user_rol_filial.objects.get(usuario=self.request.user)
         if user_filial.filial != obj.cliente.zona.filial and not self.request.user.is_staff:
             raise PermissionDenied
@@ -775,9 +777,59 @@ class PagoDelete(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
 
         except ObjectDoesNotExist:
             raise Http404
+        if obj.estadoregistro == 1:
+            raise PermissionDenied
         user_filial = user_rol_filial.objects.get(usuario=self.request.user)
         if user_filial.filial != obj.credito.cliente.zona.filial and not self.request.user.is_staff:
             raise PermissionDenied
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
+class TransaccionesOpen(LoginRequiredMixin, ListView):
+    template_name = "cobrox/registros_ingresados.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(TransaccionesOpen, self).get_context_data(**kwargs)
+
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        context['pagos'] = pago.objects.filter(estadoregistro=0).filter(credito__cliente__zona__filial=user_filial.filial).order_by("id")
+        context['pagos_sum'] = pago.objects.filter(estadoregistro=0).filter(credito__cliente__zona__filial=user_filial.filial).values('tipoingreso').annotate(sum_monto=Sum('monto')).order_by('tipoingreso')
+        context['pagos_count'] = pago.objects.filter(estadoregistro=0).filter(credito__cliente__zona__filial=user_filial.filial).values('tipoingreso').annotate(count_monto=Count('monto')).order_by('tipoingreso')
+        context['creditos'] = credito.objects.filter(estadoregistro=0).filter(cliente__zona__filial=user_filial.filial).order_by("id")
+        context['creditos_sum'] = credito.objects.filter(estadoregistro=0).filter(cliente__zona__filial=user_filial.filial).values('tipocredito').annotate(sum_monto=Sum('montootorgado')).order_by('tipocredito')
+        context['creditos_count'] = credito.objects.filter(estadoregistro=0).filter(cliente__zona__filial=user_filial.filial).values('tipocredito').annotate(
+            count_monto=Count('montootorgado')).order_by('tipocredito')
+
+        return context
+
+    def get_queryset(self):
+        pass
+
+
+class CerrarRegistros(LoginRequiredMixin,DetailView):
+
+    def get(self, request, *args, **kwargs):
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+
+        pagosc = pago.objects.filter(estadoregistro=0).filter(credito__cliente__zona__filial=user_filial.filial).count()
+        creditosc =credito.objects.filter(estadoregistro=0).filter(cliente__zona__filial=user_filial.filial).count()
+
+        if pagosc == 0 and creditosc == 0:
+            messages.warning(request, "No existen registros a cerrar")
+        else:
+            with transaction.atomic():
+                pago.objects.filter(estadoregistro=0).filter(credito__cliente__zona__filial=user_filial.filial).update(estadoregistro=1)
+                credito.objects.filter(estadoregistro=0).filter(cliente__zona__filial=user_filial.filial).update(estadoregistro=1)
+            messages.success(request, "Los registros han sido cerrados satisfactoriamente")
+        my_render = reverse_lazy('cobrox:index')
+        return HttpResponseRedirect(my_render)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
         if user_filial.rol.codigo == 'OPE':
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)

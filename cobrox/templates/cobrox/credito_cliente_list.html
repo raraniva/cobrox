@@ -66,9 +66,11 @@
                                     <span class="badge badge-info"> <i class="fa fa-times-circle"></i> Ingresar Pago</span>
                                 </a>
 
-                                <a class="confirmacion_trans" href="{% url 'cobrox:CreditoDelete' pk=obj.id %}"  >
-                                    <span class="badge badge-danger"> <i class="fa fa-times-circle"></i> Borrar Crédito</span>
-                                </a>
+                                {% if obj.estadoregistro == 0 %}
+                                    <a class="confirmacion_trans" href="{% url 'cobrox:CreditoDelete' pk=obj.id %}"  >
+                                        <span class="badge badge-danger"> <i class="fa fa-times-circle"></i> Borrar Crédito</span>
+                                    </a>
+                                {% endif %}
                             </div>
                             <div class="media-body text-left ">
                                 <br>

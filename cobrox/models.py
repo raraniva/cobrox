@@ -1,6 +1,11 @@
 from django.db import models
 
-
+ingresado = 0
+conciliado = 1
+estaoregistroc = (
+    (ingresado, 'INGRESADO'),
+    (conciliado, 'CONCILIADO'),
+)
 # Create your models here.
 class filial(models.Model):
     nombre = models.CharField(max_length=100, null=False, blank=False)
@@ -90,6 +95,8 @@ class credito(models.Model):
 
     tipocredito = models.PositiveIntegerField(choices=tipocreditoc, null=False, help_text='Seleccione el Tipo de Crédito')
     estadocredito = models.PositiveIntegerField(choices=estadocreditoc, null=False, help_text='Seleccione el Estado del Crédito')
+    estadoregistro = models.PositiveIntegerField(choices=estaoregistroc, null=False, blank=False,
+                                                 help_text='Seleccione el Estado del Registro', default=0)
 
     class Meta:
         ordering = ['id']
@@ -114,3 +121,5 @@ class pago (models.Model):
     credito = models.ForeignKey(credito, on_delete=models.DO_NOTHING, blank=False, null=False, related_name='credit')
     tipoingreso = models.PositiveIntegerField(choices=tipoingresoc, null=False,
                                               help_text='Seleccione el Tipo de Ingreso')
+    estadoregistro = models.PositiveIntegerField(choices=estaoregistroc, null=False, blank=False,
+                                              help_text='Seleccione el Estado del Registro',default=0)

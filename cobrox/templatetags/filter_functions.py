@@ -113,7 +113,10 @@ def muestra_pagos(pcredito):
             devolver =devolver+"<td>RECIBO</td>"
         else:
             devolver = devolver + "<td>REFINANC</td>"
-        devolver =devolver+"<td><a class =\"confirmacion\" href=\"/PagoDelete/"+ str(entry.id)+ "\" ><button type=\"button\" class=\"btn btn-outline btn-danger\"><i class=\"fa fa-times-circle\"></i></button></a></td></tr>"
+        if entry.estadoregistro == 0:
+            devolver =devolver+"<td><a class =\"confirmacion\" href=\"/PagoDelete/"+ str(entry.id)+ "\" ><button type=\"button\" class=\"btn btn-outline btn-danger\"><i class=\"fa fa-times-circle\"></i></button></a></td></tr>"
+        else:
+            devolver = devolver + "<td></td></tr>"
     return mark_safe(devolver)
 
 
