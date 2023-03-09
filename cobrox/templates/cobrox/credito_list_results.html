@@ -12,7 +12,7 @@
                     <th>Qty <br>Cuotas </th>
                     <th>Tasa <br> interés</th>
                     <th>Monto <br>Otorgado</th>
-                    <th>Total <br>Intereses</th>
+
                     <th>Total <br> Pagar</th>
                     <th>Cuota</th>
                     <th>Cuotas <br>Pendientes </th>
@@ -39,7 +39,7 @@
                             <td> {{ obj.qtydiascuota }} </td>
                             <td> {{ obj.interespct }} % </td>
                             <td align="right">$ {{ obj.montootorgado|intcomma }}</td>
-                            <td align="right">$ {{ obj.interestotal|intcomma }}</td>
+
                             <td align="right">$ {{ obj.montoyinterestotal|intcomma }}</td>
                             <td align="right">$ {{ obj.totalcuota }} </td>
                             <td align="right"> {{ obj.cuotaspendientes}} </td>
@@ -53,6 +53,7 @@
 
                             </button></a>
                             &nbsp;
+                            {% if obj.nm_estado == 1 %}
                             <a href="{% url 'cobrox:PagoAdd' pk=obj.id %}"  >
                                 <button type="button" class="btn btn-outline btn-primary" title='Ingresar Pago'>
 
@@ -60,6 +61,22 @@
 
                             </button>
                                 </a>
+                            {% endif %}
+                            &nbsp;
+                            {% if obj.nm_estado == 1 %}
+                                <a class="confirmacion" href="{% url 'cobrox:CambiarEstadoCredito' pk=obj.id %}"  >
+                                    <button type="button" class="btn btn-outline btn-warning" title='Inactivar Crédito'>
+                                         <i class="fa fa-warning"></i>
+                                </button>
+                                    </a>
+                            {% else %}
+                                <a class="confirmacion" href="{% url 'cobrox:CambiarEstadoCredito' pk=obj.id %}"  >
+                                    <button type="button" class="btn btn-outline btn-warning" title='Activar Crédito'>
+                                         <i class="fa fa-warning"></i>
+                                </button>
+                                    </a>
+                                {% endif %}
+
                                 </td>
                             {% empty %}
                             <td> No existen créditos registrados </td>

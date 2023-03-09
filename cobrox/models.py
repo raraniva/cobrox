@@ -60,6 +60,13 @@ class cliente(models.Model):
 
 
 class credito(models.Model):
+    is_inactive = -1
+    is_active = 1
+    tipoestadoc = (
+        (is_inactive, 'INACTIVE'),
+        (is_active, 'ACTIVE'),
+    )
+
     credito = 0
     refinan = 1
     tipocreditoc = (
@@ -97,6 +104,8 @@ class credito(models.Model):
     estadocredito = models.PositiveIntegerField(choices=estadocreditoc, null=False, help_text='Seleccione el Estado del Crédito')
     estadoregistro = models.PositiveIntegerField(choices=estaoregistroc, null=False, blank=False,
                                                  help_text='Seleccione el Estado del Registro', default=0)
+    nm_estado = models.IntegerField(choices=tipoestadoc, null=False, blank=False,
+                                                 help_text='Activo o Inactivo el Registro', default=1)
 
     class Meta:
         ordering = ['id']

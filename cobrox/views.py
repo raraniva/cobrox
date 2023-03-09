@@ -447,7 +447,7 @@ class Credito_clientelist(LoginRequiredMixin, ListView):
         return context;
 
     def get_queryset(self):
-        return credito.objects.filter(cliente__id = self.kwargs['pk']).order_by('fechaini').reverse()
+        return credito.objects.filter(cliente__id = self.kwargs['pk']).filter(nm_estado = 1).order_by('id').reverse()
 
     def cliente(self):
         return cliente.objects.get(pk = self.kwargs['pk'])
@@ -473,8 +473,8 @@ class CreditoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     success_message = 'Información de Crédito Almacenado Correctamente!!!!'
 
     def get_success_url(self):
-        return reverse('cobrox:Credito_clientelist',
-                       kwargs={'pk':self.kwargs['pk']}
+        return reverse('cobrox:SuccessCreditoPage',
+                       kwargs={'pk':self.object.id}
                        )
 
     def form_valid(self, form ):
@@ -695,6 +695,9 @@ class PagoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
             obj = credito.objects.get(id=self.kwargs['pk'])
         except ObjectDoesNotExist:
             raise Http404
+
+        if obj.nm_estado != 1:
+            raise PermissionDenied
         if user_filial.filial != obj.cliente.zona.filial and not self.request.user.is_staff:
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
@@ -846,15 +849,19 @@ class CreditoList(LoginRequiredMixin, FormMixin,ListView):
             'codigo_id': '',
         }
 
+    def est(self):
+        return self.kwargs['act']
+
     def user_rol_filial(self):
         return user_rol_filial.objects.get(usuario=self.request.user)
 
     def get_queryset(self):
+
         if self.request.user.is_staff:
-            qry = credito.objects.all().order_by("id")
+            qry = credito.objects.filter(nm_estado = self.kwargs['act']).order_by("id")
         else:
             obj = user_rol_filial.objects.get(usuario=self.request.user)
-            qry = credito.objects.filter(cliente__zona__filial=obj.filial).order_by("id")
+            qry = credito.objects.filter(cliente__zona__filial=obj.filial).filter(nm_estado = self.kwargs['act']).order_by("id")
         return qry
 
     def get_template_names(self):
@@ -913,6 +920,74 @@ class Estado_cuentalist(LoginRequiredMixin, ListView):
         try:
             ocredito = credito.objects.get(id=self.kwargs['pk'])
 
+            obj = ocredito.cliente
+        except ObjectDoesNotExist:
+            raise Http404
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.filial != obj.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
+class CambiarEstadoCredito(LoginRequiredMixin,DetailView):
+
+    def get(self, request, *args, **kwargs):
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        ocredito = credito.objects.get(id=self.kwargs['pk'])
+
+        if ocredito.nm_estado == 1:
+            ocredito.nm_estado=-1;
+            mensaje_s="El crédito ha sido INACTIVADO satisfactoriamente"
+        else:
+            ocredito.nm_estado = 1;
+            mensaje_s = "El crédito ha sido ACTIVADO satisfactoriamente"
+        ocredito.save()
+
+        messages.success(request,mensaje_s)
+        my_render = reverse('cobrox:CreditoList',
+                kwargs={'act': ocredito.nm_estado}
+                )
+
+        #my_render = reverse_lazy('cobrox:CreditoList')
+        return HttpResponseRedirect(my_render)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        try:
+            ocredito = credito.objects.get(id=self.kwargs['pk'])
+            obj = ocredito.cliente
+        except ObjectDoesNotExist:
+            raise Http404
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.filial != obj.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SuccessCreditoPage(LoginRequiredMixin,ListView):
+    template_name = 'cobrox/success_credito.html'
+
+    def get_queryset(self):
+        pass
+
+    def cliente(self):
+        ocr= credito.objects.get(id=self.kwargs['pk'])
+        return ocr.cliente
+
+
+    def credito(self):
+        return credito.objects.get(id=self.kwargs['pk'])
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        try:
+            ocredito = credito.objects.get(id=self.kwargs['pk'])
             obj = ocredito.cliente
         except ObjectDoesNotExist:
             raise Http404

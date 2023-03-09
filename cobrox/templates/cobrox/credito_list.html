@@ -1,18 +1,22 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load humanize %}
+{% load filter_functions %}
 {% block nav-operacion %}class="active"{% endblock %}
-{% block nav-operacion-creditos %}class="active"{% endblock %}
+
 
 {% block main %}
 <div class="row">
     <div class="col-lg-12">
         <div class="ibox float-e-margins">
+            {% if view.est == '1' %}
             <div class="ibox-title"><h1><i class="fa fa-address-book"></i> Pago Créditos</h1>
-
+            {% else %}
+                <div class="ibox-title"><h1><i class="fa fa-address-book"></i> Créditos Inactivos</h1>
+            {% endif %}
             </div>
             <div class="ibox-content">
-                <form id="credito-list-filter" action="{% url 'cobrox:CreditoList' %}">
+                <form id="credito-list-filter" action="{% url 'cobrox:CreditoList' act=view.est %}">
                   <div class="row">
                     <div class="col-lg-4">
                       <div class="form-group" >

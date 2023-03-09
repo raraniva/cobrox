@@ -106,7 +106,7 @@ urlpatterns = [
        views.CerrarRegistros.as_view(),
        name='CerrarRegistros'
        ),
-    path('credito',
+    path('credito/<str:act>',
        views.CreditoList.as_view(),
        name='CreditoList'
        ),
@@ -114,6 +114,13 @@ urlpatterns = [
        views.Estado_cuentalist.as_view(),
        name='EstadoCuenta'
        ),
+    path('CambiarEstadoCredito/<int:pk>',
+       views.CambiarEstadoCredito.as_view(),
+       name='CambiarEstadoCredito'
+       ),
+    path('success/<int:pk>/',
+         views.SuccessCreditoPage.as_view(),
+         name='SuccessCreditoPage'),
     path('ajax/load-calculo_pago/', views.load_calculo_pago, name='ajax_load_calculo_pago'),
     path('ajax/load-calculo_distribucion_pago/', views.load_calculo_distribucion_pago, name='ajax_load_calculo_distribucion_pago'),
     ] + static(settings.MEDIA_URL)

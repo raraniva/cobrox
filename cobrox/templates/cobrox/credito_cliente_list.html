@@ -38,7 +38,7 @@
 
                         </div>
                         <div class="col content">
-
+                            <p><strong>ID:</strong> {{ obj.id|stringformat:"06d" }} </p>
                             <p><strong>Cuotas Pendientes:</strong>  {{ obj.cuotaspendientes }}  &nbsp;&nbsp;
                             Cuotas Pagadas: {{  obj.cuotaspagadas  }} &nbsp;&nbsp;&nbsp;
                                 {% if obj.tipocredito == 0 %}

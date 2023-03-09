@@ -60,9 +60,11 @@
                             <p> Capital Total: $ {{ view.credito.montootorgado|intcomma  }}  </p>
                             <p> Total: $ {{ view.credito.montoyinterestotal|intcomma  }}  </p>
 
+                            {% if view.credito.nm_estado == 1 %}
                             <a href="{% url 'cobrox:PagoAdd' pk=view.credito.id %}"  >
                                 <span class="badge badge-primary"> <i class="fa fa-credit-card"></i> Ingresar Pago</span>
                             </a>
+                            {% endif %}
 
                             {% if view.credito.estadoregistro == 0 %}
                                 <a class="confirmacion_trans" href="{% url 'cobrox:CreditoDelete' pk=view.credito.id %}"  >
@@ -151,7 +153,7 @@
                         <span class="ladda-button badge badge-primary"><h4> <i class="fa fa-plus-circle"></i> Ir Registrar Crédito</h4></span>
                          </a>
                             <p> </p>
-                        <a href="{% url 'cobrox:CreditoList' %}"  >
+                        <a href="{% url 'cobrox:CreditoList' act=view.credito.nm_estado %}"  >
                         <span class="ladda-button badge badge-primary"><h4> <i class="fa fa-backward"></i> Regresar a Créditos</h4></span>
                          </a>
                         <p>
