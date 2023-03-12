@@ -184,6 +184,7 @@ class PagoAddForm(forms.ModelForm):
             'interes': forms.HiddenInput(),
             'cuota': forms.HiddenInput(),
             'credito': forms.HiddenInput(),
+            'tipoingreso' :forms.HiddenInput(),
                    }
         labels = {
             'monto': 'Digite Monto Recibido:',

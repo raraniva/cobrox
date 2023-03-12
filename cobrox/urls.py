@@ -121,6 +121,10 @@ urlpatterns = [
     path('success/<int:pk>/',
          views.SuccessCreditoPage.as_view(),
          name='SuccessCreditoPage'),
+    path('FinanciamientoAdd/<int:pk>',
+       views.FinanciamientoAdd.as_view(),
+       name='FinanciamientoAdd'
+       ),
     path('ajax/load-calculo_pago/', views.load_calculo_pago, name='ajax_load_calculo_pago'),
     path('ajax/load-calculo_distribucion_pago/', views.load_calculo_distribucion_pago, name='ajax_load_calculo_distribucion_pago'),
     ] + static(settings.MEDIA_URL)

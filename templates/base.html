@@ -62,7 +62,7 @@
                     <ul class="nav nav-second-level collapse">
                         <li {% block nav-operacion-clientes %}{% endblock %}><a href="{% url 'cobrox:ClienteList' %}"><i class="fa fa-list-alt"></i>Clientes</a></li>
                         <li {% block nav-operacion-creditos %}{% endblock %}><a href="{% url 'cobrox:CreditoList' act=1 %}"><i class="fa fa-list-alt"></i>Pago Crédito</a></li>
-                        <li {% block nav-operacion-cierre %}{% endblock %}><a href="{% url 'cobrox:TransaccionesOpen' %}"><i class="fa fa-list-alt"></i>Cierre</a></li>
+                        <li {% block nav-operacion-cierre %}{% endblock %}><a href="{% url 'cobrox:TransaccionesOpen' %}"><i class="fa fa-list-alt"></i>Proceso Cierre</a></li>
                         <li {% block nav-operacion-inactivos %}{% endblock %}><a href="{% url 'cobrox:CreditoList' act=-1 %}"><i class="fa fa-list-alt"></i>Créditos Inactivos</a></li>
                     </ul>
                 </li>

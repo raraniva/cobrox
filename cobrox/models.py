@@ -71,7 +71,7 @@ class credito(models.Model):
     refinan = 1
     tipocreditoc = (
         (credito, 'CRÉDITO'),
-        (refinan, 'REFINANCIAMIENTO'),
+        (refinan, 'REFINANC'),
     )
 
     vigente = 0
@@ -132,3 +132,8 @@ class pago (models.Model):
                                               help_text='Seleccione el Tipo de Ingreso')
     estadoregistro = models.PositiveIntegerField(choices=estaoregistroc, null=False, blank=False,
                                               help_text='Seleccione el Estado del Registro',default=0)
+
+
+class creditofinanc (models.Model):
+    credito_nvo = models.ForeignKey(credito, on_delete=models.DO_NOTHING, blank=False, null=False, related_name='credito_padre')
+    credito_financia = models.ForeignKey(credito, on_delete=models.DO_NOTHING, blank=False, null=False, related_name='credit_financia')

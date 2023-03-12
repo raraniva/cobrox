@@ -13,7 +13,7 @@
                     <th>Tasa <br> interés</th>
                     <th>Monto <br>Otorgado</th>
 
-                    <th>Total <br> Pagar</th>
+
                     <th>Cuota</th>
                     <th>Cuotas <br>Pendientes </th>
                     <th>Saldo <br>Pendiente</th>
@@ -40,7 +40,7 @@
                             <td> {{ obj.interespct }} % </td>
                             <td align="right">$ {{ obj.montootorgado|intcomma }}</td>
 
-                            <td align="right">$ {{ obj.montoyinterestotal|intcomma }}</td>
+
                             <td align="right">$ {{ obj.totalcuota }} </td>
                             <td align="right"> {{ obj.cuotaspendientes}} </td>
                             <td align="right">$ {{ obj.saldopendiente }} </td>
@@ -54,29 +54,40 @@
                             </button></a>
                             &nbsp;
                             {% if obj.nm_estado == 1 %}
+                                {% if obj.estadocredito == 0 %}
                             <a href="{% url 'cobrox:PagoAdd' pk=obj.id %}"  >
                                 <button type="button" class="btn btn-outline btn-primary" title='Ingresar Pago'>
 
                                      <i class="fa fa-credit-card"></i>
 
-                            </button>
+                                 </button>
+                                </a>
+                                &nbsp;
+                                <a href="{% url 'cobrox:FinanciamientoAdd' pk=obj.id %}"  >
+                                <button type="button" class="btn btn-outline btn-primary" title='Refinanciar'>
+
+                                     <i class="fa fa-legal"></i>
+
+                                 </button>
                                 </a>
                             {% endif %}
-                            &nbsp;
-                            {% if obj.nm_estado == 1 %}
-                                <a class="confirmacion" href="{% url 'cobrox:CambiarEstadoCredito' pk=obj.id %}"  >
-                                    <button type="button" class="btn btn-outline btn-warning" title='Inactivar Crédito'>
-                                         <i class="fa fa-warning"></i>
-                                </button>
-                                    </a>
-                            {% else %}
-                                <a class="confirmacion" href="{% url 'cobrox:CambiarEstadoCredito' pk=obj.id %}"  >
-                                    <button type="button" class="btn btn-outline btn-warning" title='Activar Crédito'>
-                                         <i class="fa fa-warning"></i>
-                                </button>
-                                    </a>
                                 {% endif %}
-
+                            &nbsp;
+                            {% if obj.estadocredito == 0 %}
+                                {% if obj.nm_estado == 1 %}
+                                    <a class="confirmacion" href="{% url 'cobrox:CambiarEstadoCredito' pk=obj.id %}"  >
+                                        <button type="button" class="btn btn-outline btn-warning" title='Inactivar Crédito'>
+                                             <i class="fa fa-warning"></i>
+                                    </button>
+                                        </a>
+                                {% else %}
+                                    <a class="confirmacion" href="{% url 'cobrox:CambiarEstadoCredito' pk=obj.id %}"  >
+                                        <button type="button" class="btn btn-outline btn-warning" title='Activar Crédito'>
+                                             <i class="fa fa-warning"></i>
+                                    </button>
+                                        </a>
+                                    {% endif %}
+                            {% endif %}
                                 </td>
                             {% empty %}
                             <td> No existen créditos registrados </td>

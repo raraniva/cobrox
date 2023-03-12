@@ -16,7 +16,15 @@
     <div class="col-lg-4">
         <div class="ibox">
             <div class="ibox-title">
-                 <h5>Datos del Crédito {{ view.credito.id|stringformat:"06d" }}</h5>
+                 <h5>
+                 {% if view.credito.tipocredito == 0 %}
+                    <span class="badge badge-primary">C</span>&nbsp;{{ view.credito.get_tipocredito_display }}
+                {% else %}
+                    <span class="badge badge-success">R</span>&nbsp;{{ view.credito.get_tipocredito_display }}
+                {% endif %}:
+                    {{ view.credito.id|stringformat:"06d" }}
+                 </h5>
+
                  <div class="ibox-tools">
                      {% revigenciaestadocredito view.credito.saldopendiente view.credito.fechaven view.credito.estadocredito as liked_by_user_flag %}
                     {% if liked_by_user_flag == 0  %}
@@ -129,10 +137,7 @@
 
                         </div>
 
-                        <h5>{{ form.tipoingreso.label }}</h5>
-                        <div class="form-group">
-                        {% render_field form.tipoingreso class="form-control" %}
-                        </div>
+
 
 
                     </div>

@@ -3,7 +3,7 @@ from django.template import loader
 from django.core.mail import send_mail
 from django.views.generic import (ListView,DetailView,CreateView,UpdateView,DeleteView)
 from django.http import HttpResponseRedirect
-from .models import filial,zona,tipo_cliente,cliente,credito,pago
+from .models import filial,zona,tipo_cliente,cliente,credito,pago,creditofinanc
 from .forms import FilialAddForm,\
     FilialUpdateForm,ZonaAddForm,ZonaUpdateForm,TipoclienteAddForm,\
     TipoclienteUpdateForm,ClienteAddForm,ClienteUpdateForm,ClienteSearchForm,CreditoAddForm,PagoAddForm,CreditoSearchForm
@@ -472,6 +472,14 @@ class CreditoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     template_name = 'cobrox/credito_add_upd.html'
     success_message = 'Información de Crédito Almacenado Correctamente!!!!'
 
+    def get_context_data(self, **kwargs):
+        context = super(CreditoAdd, self).get_context_data(**kwargs)
+        context['tip'] = 1
+        context['izq'] = 0
+        context['medio'] = 8
+
+        return context;
+
     def get_success_url(self):
         return reverse('cobrox:SuccessCreditoPage',
                        kwargs={'pk':self.object.id}
@@ -657,8 +665,8 @@ class PagoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         obj=credito.objects.get(pk=self.kwargs['pk'])
-        return reverse('cobrox:Credito_clientelist',
-                       kwargs={'pk':obj.cliente.id}
+        return reverse('cobrox:EstadoCuenta',
+                       kwargs={'pk':obj.id}
                        )
 
     def form_valid(self, form ):
@@ -672,8 +680,8 @@ class PagoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
                 cuotas_pag, cuotak, cuotai = calculopago(form.cleaned_data['monto'],
                                                          obj.capitalcuota, obj.interescuota, obj.totalcuota)
                 actualizacredito(obj, cuotas_pag, form.cleaned_data['monto'])
-                pag.capital= cuotai
-                pag.interes= cuotak
+                pag.capital= cuotak
+                pag.interes= cuotai
                 pag.cuota= cuotas_pag
                 pag.save()
                 return super().form_valid(form)
@@ -696,7 +704,7 @@ class PagoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
         except ObjectDoesNotExist:
             raise Http404
 
-        if obj.nm_estado != 1:
+        if obj.nm_estado != 1 or obj.estadocredito != 0:
             raise PermissionDenied
         if user_filial.filial != obj.cliente.zona.filial and not self.request.user.is_staff:
             raise PermissionDenied
@@ -708,6 +716,7 @@ class PagoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
             'capital': 0,
             'interes': 0,
             'cuota': 0,
+            'tipoingreso':0
         }
 
 
@@ -997,3 +1006,95 @@ class SuccessCreditoPage(LoginRequiredMixin,ListView):
         if user_filial.rol.codigo == 'OPE':
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
+
+
+class FinanciamientoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    form_class = CreditoAddForm
+    template_name = 'cobrox/credito_add_upd.html'
+    success_message = 'Información de Refinanciamiento Almacenado Correctamente!!!!'
+
+    def get_success_url(self):
+        return reverse('cobrox:SuccessCreditoPage',
+                       kwargs={'pk':self.object.id}
+                       )
+
+    def get_context_data(self, **kwargs):
+        context = super(FinanciamientoAdd, self).get_context_data(**kwargs)
+        context['tip'] = 0
+        context['izq'] = 12
+        context['medio'] = 8
+
+        return context;
+
+    def form_valid(self, form ):
+        action = self.request.POST.get('action')
+        form = self.form_class(self.request.POST)
+
+        if action == 'SAVE':
+            with transaction.atomic():
+                cred = form.save(commit=False)
+                ocredito = credito.objects.get(pk=self.kwargs['pk'])
+
+                qtydiascuota, capitalcuota, interescuota, totalcuota, interestotal, otorinterestotal = calculo(
+                    form.cleaned_data['montootorgado'], form.cleaned_data['fechaini'].strftime('%Y-%m-%d'), form.cleaned_data['fechaven'].strftime('%Y-%m-%d'), form.cleaned_data['interespct'])
+                cred.qtydiascuota = qtydiascuota
+                cred.capitalcuota = capitalcuota
+                cred.interescuota = interescuota
+                cred.totalcuota = totalcuota
+                cred.interestotal = interestotal
+                cred.montoyinterestotal = otorinterestotal
+                cred.cuotaspagadas = 0
+                cred.cuotaspendientes =qtydiascuota
+                cred.saldopendiente = otorinterestotal
+                cred.save()
+
+
+                ocreditofinanc = creditofinanc(credito_nvo=cred, credito_financia=ocredito)
+                ocreditofinanc.save()
+
+                cuotas_pag, cuotak, cuotai = calculopago(form.cleaned_data['montootorgado'],
+                                                         ocredito.capitalcuota, ocredito.interescuota, ocredito.totalcuota)
+
+                actualizacredito(ocredito, cuotas_pag, form.cleaned_data['montootorgado'])
+                opag= pago(fecha=form.cleaned_data['fechaini'],recibo='REFINAN', credito=ocredito,
+                           monto= form.cleaned_data['montootorgado'], capital=cuotak,interes=cuotai,cuota=cuotas_pag,tipoingreso=1)
+                opag.save()
+
+            return super().form_valid(form)
+        return HttpResponseBadRequest()
+
+    def cliente(self):
+        ocredito = credito.objects.get(pk=self.kwargs['pk'])
+        return ocredito.cliente
+
+    def credito(self):
+        ocredito = credito.objects.get(pk=self.kwargs['pk'])
+        return ocredito
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.rol.codigo=='OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_initial(self):
+        ocredito=credito.objects.get(pk=self.kwargs['pk'])
+
+
+        return {
+            'montootorgado':ocredito.saldopendiente,
+            'cliente':ocredito.cliente ,
+            'tipocredito':1,
+            'estadocredito':0,
+            'qtydiascuota':0,
+            'capitalcuota':0,
+            'interescuota':0,
+            'totalcuota':0,
+            'interestotal':0,
+            'montoyinterestotal':0,
+            'cuotaspagadas':0,
+            'cuotaspendientes':0,
+            'saldopendiente':0,
+        }

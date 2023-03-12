@@ -8,7 +8,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Avg, Max, Min, Sum
 from user.models import user_rol_filial
 from cobrox.views import vigenciaestadocredito
-from cobrox.models import pago
+from cobrox.models import pago,creditofinanc
+from django.core.exceptions import ObjectDoesNotExist
 
 
 register = template.Library()
@@ -94,6 +95,23 @@ def dia_semana(dia):
         dow = "Domingo"
     return dow
 
+
+@register.simple_tag
+def refinanc_originado(ocredito):
+    try:
+        ocredfinanc = creditofinanc.objects.get(credito_financia=ocredito)
+    except ObjectDoesNotExist:
+        return None
+    return ocredfinanc.credito_nvo
+
+
+@register.simple_tag
+def credito_original(orefinanc):
+    try:
+        ocredfinanc = creditofinanc.objects.get(credito_nvo=orefinanc)
+    except ObjectDoesNotExist:
+        return None
+    return ocredfinanc.credito_financia
 
 @register.simple_tag
 def muestra_pagos(pcredito):

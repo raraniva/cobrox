@@ -32,13 +32,38 @@
                             <span class="badge badge-warning"><i class="fa fa-warning"></i> Vencido </span>
                         {% else  %}
                             <span class="badge badge-primary"><i class="fa fa-check-circle"></i> Cancelado </span>
+                            {% refinanc_originado view.credito as refinanc_o %}
+
+                            {% if refinanc_o %}
+                                <br><br>
+
+                                <span class="badge badge-success">R</span>&nbsp;{{ refinanc_o.get_tipocredito_display }}
+                                {{ refinanc_o.id|stringformat:"06d" }}
+                            {% endif %}
                         {% endif %}
                         <br>
                         <br>
 
                     </div>
                     <div class="col content">
-                        <p><strong>ID:</strong> {{ view.credito.id|stringformat:"06d" }} </p>
+                        <p><strong>ID:</strong> {{ view.credito.id|stringformat:"06d" }}
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            {% if view.credito.tipocredito == 1 %}
+                                {% credito_original view.credito as coriginal_o %}
+
+                                {% if coriginal_o %}
+                                    <small>Base:
+                                    {% if coriginal_o.tipocredito == 0 %}
+                                        <span class="badge badge-primary">C</span>&nbsp;{{ coriginal_o.get_tipocredito_display }}
+                                    {% else %}
+                                        <span class="badge badge-success">R</span>&nbsp;{{ coriginal_o.get_tipocredito_display }}
+                                    {% endif %}
+
+
+                                    {{ coriginal_o.id|stringformat:"06d" }}</small>
+                                {% endif %}
+                            {% endif %}
+                        </p>
                         <p><strong>Cuotas Pendientes:</strong>  {{ view.credito.cuotaspendientes }}  &nbsp;&nbsp;
                         Cuotas Pagadas: {{  view.credito.cuotaspagadas  }} &nbsp;&nbsp;&nbsp;
                             {% if view.credito.tipocredito == 0 %}
@@ -61,9 +86,11 @@
                             <p> Total: $ {{ view.credito.montoyinterestotal|intcomma  }}  </p>
 
                             {% if view.credito.nm_estado == 1 %}
-                            <a href="{% url 'cobrox:PagoAdd' pk=view.credito.id %}"  >
-                                <span class="badge badge-primary"> <i class="fa fa-credit-card"></i> Ingresar Pago</span>
-                            </a>
+                                {% if view.estadocredito == 0 %}
+                                <a href="{% url 'cobrox:PagoAdd' pk=view.credito.id %}"  >
+                                    <span class="badge badge-primary"> <i class="fa fa-credit-card"></i> Ingresar Pago</span>
+                                </a>
+                                {% endif %}
                             {% endif %}
 
                             {% if view.credito.estadoregistro == 0 %}
@@ -89,33 +116,32 @@
             <table class="table table-striped">
                 <thead>
                 <tr>
-                    <th><small class="text-navy"><strong>Inicio</strong></small></th>
-                    <th><small class="text-navy"><strong>Vencimiento</strong></small></th>
-                    <th><small class="text-navy"><strong>Días</strong></small></th>
-                    <th><small class="text-navy"><strong>Otorgado</strong></small></th>
+                    <th><small class="text-navy"><strong>Fecha</strong></small></th>
+
+                    <th><small class="text-navy"><strong>Monto</strong></small></th>
+                    <th><small class="text-navy"><strong>Capital</strong></small></th>
                     <th><small class="text-navy"><strong>Interés</strong></small></th>
-                    <th><small class="text-navy"><strong>Cuotas<br>Pendientes</strong></small></th>
                     <th><small class="text-navy"><strong>Cuotas<br>Pagadas</strong></small></th>
+                    <th><small class="text-navy"><strong>Recibo</strong></small></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for obj in object_list %}
                 <tr>
-                    <td><small class="text-navy">{{ obj.fechaini |date:'d-b-Y ' }}</small></td>
-                    <td><small class="text-navy">{{ obj.fechaven |date:'d-b-Y ' }}</small></td>
-                    <td><small class="text-navy">{{ obj.qtydiascuota }}</small></td>
+                    <td><small >{{ obj.fecha |date:'d-b-Y ' }}</small></td>
+                    <td><small >$ {{ obj.monto|intcomma }}  </small> </td>
+                    <td><small >$ {{ obj.capital|intcomma }}  </small> </td>
+                    <td><small >$ {{ obj.interes|intcomma }}  </small> </td>
+                    <td><small > {{ obj.cuota|intcomma }}  </small> </td>
+                    <td><small >  {{ obj.recibo }}  </small> </td>
 
-                    <td><small class="text-navy">$ {{ obj.montootorgado|intcomma }}  </small> </td>
-                    <td><small class="text-navy">  {{ obj.interespct|intcomma }}%  </small> </td>
-
-                    <td><small class="text-navy">{{ obj.cuotaspendientes }}  </small> </td>&nbsp;
-                    <td><small class="text-navy">{{  obj.cuotaspagadas  }} &nbsp; </small> </td>
                 </tr>
                 {% empty %}
                     <small>Crédito no tiene pagos registrados</small>
                 {% endfor %}
                 </tbody>
                 </table>
+
         </div>
     </div>
 </div>
@@ -175,80 +201,6 @@
 </div>
 </div>
 
-{% for obj in object_list %}
-<div class="modal fade" id="modal-{{ obj.id }}" tabindex="-1" role="dialog" >
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content animated bounceInRight">
 
-          <div class="modal-header">
-
-              <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th><small class="text-navy"><strong>Inicio</strong></small></th>
-                    <th><small class="text-navy"><strong>Vencimiento</strong></small></th>
-                    <th><small class="text-navy"><strong>Días</strong></small></th>
-                    <th><small class="text-navy"><strong>Otorgado</strong></small></th>
-                    <th><small class="text-navy"><strong>Interés</strong></small></th>
-                    <th><small class="text-navy"><strong>Cuotas<br>Pendientes</strong></small></th>
-                    <th><small class="text-navy"><strong>Cuotas<br>Pagadas</strong></small></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td><small class="text-navy">{{ obj.fechaini |date:'d-b-Y ' }}</small></td>
-                    <td><small class="text-navy">{{ obj.fechaven |date:'d-b-Y ' }}</small></td>
-                    <td><small class="text-navy">{{ obj.qtydiascuota }}</small></td>
-
-                    <td><small class="text-navy">$ {{ obj.montootorgado|intcomma }}  </small> </td>
-                    <td><small class="text-navy">  {{ obj.interespct|intcomma }}%  </small> </td>
-
-                    <td><small class="text-navy">{{ obj.cuotaspendientes }}  </small> </td>&nbsp;
-                    <td><small class="text-navy">{{  obj.cuotaspagadas  }} &nbsp; </small> </td>
-                </tr>
-                </tbody>
-                </table>
-
-
-
-
-          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-
-        </div>
-        <div class="modal-body">
-            <div class="row">
-                <div class="col-lg-12">
-
-
-
-                            <table class="table table-striped">
-                            <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Recibido</th>
-                                <th>Capital</th>
-                                <th>Interés</th>
-                                <th>Cuotas<br> Abonadas</th>
-                                <th>Recibo</th>
-                                <th>Tipo </th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {% muestra_pagos obj.id %}
-                            </tbody>
-                            </table>
-
-
-                </div>
-
-            </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-</div>
- {% endfor %}
 {% endblock %}
 

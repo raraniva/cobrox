@@ -32,13 +32,43 @@
                                 <span class="badge badge-warning"><i class="fa fa-warning"></i> Vencido </span>
                             {% else  %}
                                 <span class="badge badge-primary"><i class="fa fa-check-circle"></i> Cancelado </span>
+                                {% refinanc_originado obj as refinanc_o %}
+
+                                {% if refinanc_o %}
+                                    <br><br>
+                                    {% if refinanc_o.tipocredito == 0 %}
+                                        <span class="badge badge-primary">C</span>&nbsp;{{ refinanc_o.get_tipocredito_display }}
+                                    {% else %}
+                                        <span class="badge badge-success">R</span>&nbsp;{{ refinanc_o.get_tipocredito_display }}
+                                    {% endif %}
+                                    {{ refinanc_o.id|stringformat:"06d" }}
+                                {% endif %}
+
+
                             {% endif %}
                             <br>
                             <br>
 
                         </div>
                         <div class="col content">
-                            <p><strong>ID:</strong> {{ obj.id|stringformat:"06d" }} </p>
+                            <p><strong>ID:</strong> {{ obj.id|stringformat:"06d" }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            {% if obj.tipocredito == 1 %}
+                                {% credito_original obj as coriginal_o %}
+
+                                {% if coriginal_o %}
+                                    <small>Base:
+                                    {% if coriginal_o.tipocredito == 0 %}
+                                        <span class="badge badge-primary">C</span>&nbsp;{{ coriginal_o.get_tipocredito_display }}
+                                    {% else %}
+                                        <span class="badge badge-success">R</span>&nbsp;{{ coriginal_o.get_tipocredito_display }}
+                                    {% endif %}
+
+
+                                    {{ coriginal_o.id|stringformat:"06d" }}</small>
+                                {% endif %}
+                            {% endif %}
+                            </p>
+
                             <p><strong>Cuotas Pendientes:</strong>  {{ obj.cuotaspendientes }}  &nbsp;&nbsp;
                             Cuotas Pagadas: {{  obj.cuotaspagadas  }} &nbsp;&nbsp;&nbsp;
                                 {% if obj.tipocredito == 0 %}
@@ -59,13 +89,15 @@
                                 <p> Interes Total: $ {{ obj.interestotal|intcomma  }}  </p>
                                 <p> Capital Total: $ {{ obj.montootorgado|intcomma  }}  </p>
                                 <p> Total: $ {{ obj.montoyinterestotal|intcomma  }}  </p>
+
                                 <a  title="Ver" data-toggle="modal" data-target="#modal-{{ obj.id }}">
                                     <span class="badge badge-primary"><i class="fa fa-archive"></i>&nbsp; Ver Pagos &nbsp;</span>
                                 </a>
+                                {% if obj.estadocredito == 0 %}
                                 <a href="{% url 'cobrox:PagoAdd' pk=obj.id %}"  >
                                     <span class="badge badge-primary"><i class="fa fa-credit-card"></i> Ingresar Pago</span>
                                 </a>
-
+                                {% endif %}
                                 {% if obj.estadoregistro == 0 %}
                                     <a class="confirmacion_trans" href="{% url 'cobrox:CreditoDelete' pk=obj.id %}"  >
                                         <span class="badge badge-danger"> <i class="fa fa-times-circle"></i> Borrar Crédito</span>
