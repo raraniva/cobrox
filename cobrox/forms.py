@@ -1,5 +1,5 @@
 from django import forms
-from .models import filial,zona,tipo_cliente,cliente,credito,pago
+from .models import filial,zona,tipo_cliente,cliente,credito,pago,cliente_archivo,credito_archivo
 from django.db.models import Q
 from user.models import user_rol_filial
 
@@ -192,3 +192,25 @@ class PagoAddForm(forms.ModelForm):
             'fecha': 'Seleccione fecha:',
             'tipoingreso': 'Tipo de Ingreso:',
         }
+
+
+class Archivos_clienteForm(forms.ModelForm):
+
+    class Meta:
+        model = cliente_archivo
+        fields=['cliente','archivo','nombre']
+        widgets = {'cliente': forms.HiddenInput(),
+                   'nombre': forms.HiddenInput(),
+                    'archivo' : forms.FileInput(attrs={'accept':'.png, .jpg, .jpeg'})}
+                   #'file' : forms.FileInput(attrs={'accept':'.png, .jpg, .jpeg'})}
+
+
+class Archivos_creditoForm(forms.ModelForm):
+
+    class Meta:
+        model = credito_archivo
+        fields=['credito','archivo','nombre']
+        widgets = {'credito': forms.HiddenInput(),
+                   'nombre': forms.HiddenInput(),
+                    'archivo' : forms.FileInput(attrs={'accept':'.png, .jpg, .jpeg'})}
+                   #'file' : forms.FileInput(attrs={'accept':'.png, .jpg, .jpeg'})}

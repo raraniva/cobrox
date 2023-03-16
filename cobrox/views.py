@@ -3,10 +3,11 @@ from django.template import loader
 from django.core.mail import send_mail
 from django.views.generic import (ListView,DetailView,CreateView,UpdateView,DeleteView)
 from django.http import HttpResponseRedirect
-from .models import filial,zona,tipo_cliente,cliente,credito,pago,creditofinanc
+from .models import filial,zona,tipo_cliente,cliente,credito,pago,creditofinanc,cliente_archivo,credito_archivo
 from .forms import FilialAddForm,\
     FilialUpdateForm,ZonaAddForm,ZonaUpdateForm,TipoclienteAddForm,\
-    TipoclienteUpdateForm,ClienteAddForm,ClienteUpdateForm,ClienteSearchForm,CreditoAddForm,PagoAddForm,CreditoSearchForm
+    TipoclienteUpdateForm,ClienteAddForm,ClienteUpdateForm,ClienteSearchForm,CreditoAddForm,PagoAddForm,CreditoSearchForm,\
+    Archivos_clienteForm,Archivos_creditoForm
 from datetime import timedelta
 from django.views.generic.edit import FormMixin,FormView
 from user.models import user_rol_filial
@@ -416,6 +417,11 @@ class ClienteAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('cobrox:ClienteList')
     success_message = 'Informacion de Cliente Almacenada Correctamente!!!!'
 
+    def get_success_url(self):
+        return reverse('cobrox:Archivos_clienteAdd',
+                       kwargs={'pk':self.object.id}
+                       )
+
     def form_valid(self, form ):
         action = self.request.POST.get('action')
         form = self.form_class(self.request.POST)
@@ -444,6 +450,7 @@ class Credito_clientelist(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(Credito_clientelist, self).get_context_data(**kwargs)
+        context['cliente_archivos'] = cliente_archivo.objects.filter(cliente__id=self.kwargs['pk'])
         return context;
 
     def get_queryset(self):
@@ -1098,3 +1105,176 @@ class FinanciamientoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
             'cuotaspendientes':0,
             'saldopendiente':0,
         }
+
+
+class Archivos_clienteAdd(SuccessMessageMixin,LoginRequiredMixin,CreateView):
+    form_class = Archivos_clienteForm
+    template_name = 'cobrox/clientearchivo_add.html'
+    success_message = "El archivo fué cargado satisfactoriamente"
+
+    def get_context_data(self, **kwargs):
+        context = super(Archivos_clienteAdd, self).get_context_data(**kwargs)
+        context['cliente_archivos'] = cliente_archivo.objects.filter(cliente__id=self.kwargs['pk'])
+        return context;
+
+    def get_success_url(self):
+        foo = reverse('cobrox:Archivos_clienteAdd', kwargs={'pk': self.kwargs['pk']})
+        return foo
+
+    def cliente(self):
+        return cliente.objects.get(pk=self.kwargs['pk'])
+
+    def get_initial(self):
+        return {
+            'nombre': self.request.user.id,
+            'cliente': cliente.objects.get(pk = self.kwargs['pk'])
+
+        }
+
+    def form_valid(self, form ):
+        action = self.request.POST.get('action')
+        if action == 'SAVE':
+            if form.is_valid():
+                cliente_archivoo = form.save(commit=False)
+                nombre = form.cleaned_data['archivo'].name
+                cliente_archivoo.nombre = nombre
+                cliente_archivoo.save()
+            else:
+                print('Invalid')
+            return super().form_valid(form)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        try:
+            obj = cliente.objects.get(id=self.kwargs['pk'])
+        except ObjectDoesNotExist:
+            raise Http404
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.filial != obj.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
+class ClienteArchivoDelete(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            obj = cliente_archivo.objects.get(id=self.kwargs['pk'])
+            clien = obj.cliente
+            obj.delete()
+            messages.success(request, "El archivo ha sido eliminado satisfactoriamente.")
+
+
+            my_render = reverse('cobrox:Archivos_clienteAdd',
+                           kwargs={'pk': clien.id}
+                           )
+        except IntegrityError as e:
+            messages.error(request, "El archivo no puede ser eliminado ya que tiene registros asociados")
+            my_render = reverse('cobrox:Archivos_clienteAdd',
+                                kwargs={'pk': clien.id}
+                                )
+        return HttpResponseRedirect(my_render)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        try:
+            obj = cliente_archivo.objects.get(id=self.kwargs['pk'])
+        except ObjectDoesNotExist:
+            raise Http404
+
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.filial != obj.cliente.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
+class Archivos_creditoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
+    form_class = Archivos_creditoForm
+    template_name = 'cobrox/creditoarchivo_add.html'
+    success_message = "El archivo fué cargado satisfactoriamente"
+
+    def get_context_data(self, **kwargs):
+        context = super(Archivos_creditoAdd, self).get_context_data(**kwargs)
+        context['credito_archivos'] = credito_archivo.objects.filter(credito__id=self.kwargs['pk'])
+        return context;
+
+    def get_success_url(self):
+        foo = reverse('cobrox:Archivos_creditoAdd', kwargs={'pk': self.kwargs['pk']})
+        return foo
+
+    def credito(self):
+        return credito.objects.get(pk=self.kwargs['pk'])
+
+    def get_initial(self):
+        return {
+            'nombre': self.request.user.id,
+            'credito': credito.objects.get(pk=self.kwargs['pk'])
+
+        }
+
+    def form_valid(self, form):
+        action = self.request.POST.get('action')
+        if action == 'SAVE':
+            if form.is_valid():
+                credito_archivoo = form.save(commit=False)
+                nombre = form.cleaned_data['archivo'].name
+                credito_archivoo.nombre = nombre
+                credito_archivoo.save()
+            else:
+                print('Invalid')
+            return super().form_valid(form)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        try:
+            obj = credito.objects.get(id=self.kwargs['pk'])
+        except ObjectDoesNotExist:
+            raise Http404
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.filial != obj.cliente.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
+class CreditoArchivoDelete(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            obj = credito_archivo.objects.get(id=self.kwargs['pk'])
+            cred = obj.credito
+            obj.delete()
+            messages.success(request, "El archivo ha sido eliminado satisfactoriamente.")
+
+            my_render = reverse('cobrox:Archivos_creditoAdd',
+                                kwargs={'pk': cred.id}
+                                )
+        except IntegrityError as e:
+            messages.error(request, "El archivo no puede ser eliminado ya que tiene registros asociados")
+            my_render = reverse('cobrox:Archivos_creditoAdd',
+                                kwargs={'pk': cred.id}
+                                )
+        return HttpResponseRedirect(my_render)
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        try:
+            obj = credito_archivo.objects.get(id=self.kwargs['pk'])
+        except ObjectDoesNotExist:
+            raise Http404
+
+        user_filial = user_rol_filial.objects.get(usuario=self.request.user)
+        if user_filial.filial != obj.credito.cliente.zona.filial and not self.request.user.is_staff:
+            raise PermissionDenied
+        if user_filial.rol.codigo == 'OPE':
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)

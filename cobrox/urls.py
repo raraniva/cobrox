@@ -125,6 +125,22 @@ urlpatterns = [
        views.FinanciamientoAdd.as_view(),
        name='FinanciamientoAdd'
        ),
+    path('Archivos_clienteAdd/<int:pk>',
+       views.Archivos_clienteAdd.as_view(),
+       name='Archivos_clienteAdd'
+       ),
+    path('ClienteArchivoDelete/<int:pk>',
+       views.ClienteArchivoDelete.as_view(),
+       name='ClienteArchivoDelete'
+       ),
+    path('CreditoArchivoDelete/<int:pk>',
+       views.CreditoArchivoDelete.as_view(),
+       name='CreditoArchivoDelete'
+       ),
+    path('Archivos_creditoAdd/<int:pk>',
+       views.Archivos_creditoAdd.as_view(),
+       name='Archivos_creditoAdd'
+       ),
     path('ajax/load-calculo_pago/', views.load_calculo_pago, name='ajax_load_calculo_pago'),
     path('ajax/load-calculo_distribucion_pago/', views.load_calculo_distribucion_pago, name='ajax_load_calculo_distribucion_pago'),
     ] + static(settings.MEDIA_URL)

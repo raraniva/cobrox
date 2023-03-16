@@ -47,7 +47,12 @@
                                  Interés Total: $ {{ view.credito.interestotal|intcomma  }}  </p>
 
                     <h4><span class="label label-success">Crédito registrado satisfactoriamente</span></h4>
+                    <br>
+                    <a href="{% url 'cobrox:Archivos_creditoAdd' pk=view.credito.id %}"  >
+                                        <span class="badge badge-primary"> <i class="fa fa-upload"></i> Cargar Archivos</span>
+                                    </a>
                     <br><br><br>
+
                     <a  title="Ir a Inicio"  href="{% url 'cobrox:ClienteList' %}"><button type="button" class="btn btn-outline btn-success"><h3><i class="fa fa-backward"></i>&nbsp;&nbsp;Regresar a clientes &nbsp;&nbsp;</h3></button></a>
                 </center>
             </div>

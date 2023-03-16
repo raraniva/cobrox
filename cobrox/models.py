@@ -1,5 +1,8 @@
 from django.db import models
+from uuid import uuid4
+from django.conf import settings
 
+import os
 ingresado = 0
 conciliado = 1
 estaoregistroc = (
@@ -7,6 +10,18 @@ estaoregistroc = (
     (conciliado, 'CONCILIADO'),
 )
 # Create your models here.
+
+
+def imagepacexp_directory_path_with_uuid(instance, filename):
+    extension = filename.split(".")[1].lower()
+    return settings.PROJECT_ROOT + '/static/images/arc_clientes/{}/{}.{}'.format( instance.cliente_id, uuid4(),extension)
+
+
+def imagecreexp_directory_path_with_uuid(instance, filename):
+    extension = filename.split(".")[1].lower()
+    return settings.PROJECT_ROOT + '/static/images/arc_clientes/{}/credito/{}/{}.{}'.format(instance.credito.cliente_id, instance.credito_id, uuid4(),extension)
+
+
 class filial(models.Model):
     nombre = models.CharField(max_length=100, null=False, blank=False)
 
@@ -137,3 +152,31 @@ class pago (models.Model):
 class creditofinanc (models.Model):
     credito_nvo = models.ForeignKey(credito, on_delete=models.DO_NOTHING, blank=False, null=False, related_name='credito_padre')
     credito_financia = models.ForeignKey(credito, on_delete=models.DO_NOTHING, blank=False, null=False, related_name='credit_financia')
+
+
+class cliente_archivo(models.Model):
+    cliente = models.ForeignKey(cliente,on_delete=models.DO_NOTHING)
+    archivo = models.FileField(upload_to=imagepacexp_directory_path_with_uuid)
+    nombre = models.CharField(max_length=400, blank=False, null=False,help_text='Descripcion del nombre del archivo')
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+            ordering = ['fecha']
+
+    @property
+    def filename(self):
+        return os.path.basename(self.archivo.name)
+
+
+class credito_archivo(models.Model):
+    credito = models.ForeignKey(credito,on_delete=models.DO_NOTHING)
+    archivo = models.FileField(upload_to=imagecreexp_directory_path_with_uuid,max_length=500)
+    nombre = models.CharField(max_length=400, blank=False, null=False,help_text='Descripcion del nombre del archivo')
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+            ordering = ['fecha']
+
+    @property
+    def filename(self):
+        return os.path.basename(self.archivo.name)

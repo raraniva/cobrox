@@ -90,6 +90,10 @@
                                 <p> Capital Total: $ {{ obj.montootorgado|intcomma  }}  </p>
                                 <p> Total: $ {{ obj.montoyinterestotal|intcomma  }}  </p>
 
+                                <a href="{% url 'cobrox:Archivos_creditoAdd' pk=obj.id %}"  >
+                                        <span class="badge badge-primary"> <i class="fa fa-upload"></i> Editar Archivos</span>
+                                    </a>
+
                                 <a  title="Ver" data-toggle="modal" data-target="#modal-{{ obj.id }}">
                                     <span class="badge badge-primary"><i class="fa fa-archive"></i>&nbsp; Ver Pagos &nbsp;</span>
                                 </a>
@@ -111,7 +115,26 @@
 
 
                             </div>
+                            <div class="media-body text-left ">
+                            <div id="links2" data-slideshow="100" class="modal-fullscreen-xs-down">
+                                    {% for ag in obj.credito_archivo_set.all %}
+                                        <a href="/static/images/arc_clientes/{{ ag.credito.cliente.id }}/credito/{{ ag.credito.id }}/{{ ag.filename }}"  data-gallery="#blueimp-gallery-fullscreen">
+                                            <img src="/static/images/arc_clientes/{{ ag.credito.cliente.id }}/credito/{{ ag.credito.id }}/{{ ag.filename }}" class="img-thumbnail" width="20%"></a>
 
+
+                                    {% endfor %}
+                                <!-- The Gallery as lightbox dialog, should be a child element of the document body -->
+                                    <div id="blueimp-gallery2" class="blueimp-gallery blueimp-gallery-controls" aria-label="image gallery" aria-modal="true" role="dialog">
+                                        <div class="slides"></div>
+                                        <h3 class="title"></h3>
+                                        <a class="prev">‹</a>
+                                        <a class="next">›</a>
+                                        <a class="close">×</a>
+                                        <a class="play-pause"></a>
+                                        <ol class="indicator"></ol>
+                                    </div>
+                                </div>
+                            </div>
 
                         </div>
                     </div>
@@ -156,9 +179,17 @@
                         <span class="ladda-button badge badge-primary"><h4> <i class="fa fa-plus-circle"></i> Ir Registrar Crédito</h4></span>
                          </a>
                             <p> </p>
+
+                        <a href="{% url 'cobrox:Archivos_clienteAdd' pk=view.cliente.id  %}"  >
+                        <span class="ladda-button badge badge-primary"><h4> <i class="fa fa-upload"></i> Subir DUI / NIT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h4></span>
+                         </a>
+                        <p> </p>
+
                         <a href="{% url 'cobrox:ClienteList' %}"  >
                         <span class="ladda-button badge badge-primary"><h4> <i class="fa fa-backward"></i> Regresar a Clientes</h4></span>
                          </a>
+
+
                         <p>
 
                                 {% if view.cliente.observacion %}
@@ -169,6 +200,29 @@
                                 {% endif %}
 
                          </p>
+
+
+                            <div id="links" data-slideshow="100" class="modal-fullscreen-xs-down">
+
+                                {% for ag in cliente_archivos %}
+
+                                <a href="/static/images/arc_clientes/{{ ag.cliente.id }}/{{ ag.filename }}"  data-gallery="#blueimp-gallery-fullscreen">
+                                    <img src="/static/images/arc_clientes/{{ ag.cliente.id }}/{{ ag.filename }}" class="img-thumbnail" width="40%"></a>
+
+                                    <br><br>
+                                {% endfor %}
+                            <!-- The Gallery as lightbox dialog, should be a child element of the document body -->
+                                <div id="blueimp-gallery" class="blueimp-gallery blueimp-gallery-controls" aria-label="image gallery" aria-modal="true" role="dialog">
+                                    <div class="slides"></div>
+                                    <h3 class="title"></h3>
+                                    <a class="prev">‹</a>
+                                    <a class="next">›</a>
+                                    <a class="close">×</a>
+                                    <a class="play-pause"></a>
+                                    <ol class="indicator"></ol>
+                                </div>
+                            </div>
+
 
                     </div>
                 </div>
