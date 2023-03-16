@@ -137,4 +137,7 @@ def muestra_pagos(pcredito):
             devolver = devolver + "<td></td></tr>"
     return mark_safe(devolver)
 
+@register.simple_tag
+def changeZona(zonaid):
+    return zonaid
 

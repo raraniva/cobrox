@@ -1,7 +1,12 @@
 from django.db import models
+from django.contrib.auth.models import User
 from uuid import uuid4
 from django.conf import settings
-
+from simple_history.models import HistoricalRecords
+from django_currentuser.middleware import (
+    get_current_user, get_current_authenticated_user)
+from django_currentuser.db.models import CurrentUserField
+import datetime
 import os
 ingresado = 0
 conciliado = 1
@@ -24,6 +29,12 @@ def imagecreexp_directory_path_with_uuid(instance, filename):
 
 class filial(models.Model):
     nombre = models.CharField(max_length=100, null=False, blank=False)
+    user_creation = CurrentUserField(related_name='user_creationcc')
+    date_creation = models.DateTimeField(default=datetime.datetime.now)
+    user_last_update = CurrentUserField(on_update=True)
+
+    history = HistoricalRecords()
+
 
     class Meta:
             ordering = ['nombre']
@@ -36,6 +47,11 @@ class filial(models.Model):
 class zona(models.Model):
     nombre = models.CharField(max_length=100, null=False, blank=False)
     filial = models.ForeignKey(filial,on_delete=models.DO_NOTHING,blank=False,null=False,related_name='zonas')
+    user_creation = CurrentUserField(related_name='zona_user_creationcc')
+    date_creation = models.DateTimeField(default=datetime.datetime.now)
+    user_last_update = CurrentUserField(on_update=True)
+
+    history = HistoricalRecords()
 
     class Meta:
             ordering = ['nombre']
@@ -47,7 +63,11 @@ class zona(models.Model):
 # Create your models here.
 class tipo_cliente(models.Model):
     nombre = models.CharField(max_length=100, null=False, blank=False)
+    user_creation = CurrentUserField(related_name='tipoc_user_creationcc')
+    date_creation = models.DateTimeField(default=datetime.datetime.now)
+    user_last_update = CurrentUserField(on_update=True)
 
+    history = HistoricalRecords()
     class Meta:
             ordering = ['nombre']
 
@@ -66,6 +86,12 @@ class cliente(models.Model):
     observacion = models.TextField(null=True, blank=True)
     tipo_cliente = models.ForeignKey(tipo_cliente,on_delete=models.DO_NOTHING,blank=True,null=True,related_name='tipo')
     zona = models.ForeignKey(zona,on_delete=models.DO_NOTHING,blank=False,null=False,related_name='zonas')
+
+    user_creation = CurrentUserField(related_name='cliente_user_creationcc')
+    date_creation = models.DateTimeField(default=datetime.datetime.now)
+    user_last_update = CurrentUserField(on_update=True)
+
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ['nombre']
@@ -122,6 +148,12 @@ class credito(models.Model):
     nm_estado = models.IntegerField(choices=tipoestadoc, null=False, blank=False,
                                                  help_text='Activo o Inactivo el Registro', default=1)
 
+    user_creation = CurrentUserField(related_name='credito_user_creationcc')
+    date_creation = models.DateTimeField(default=datetime.datetime.now)
+    user_last_update = CurrentUserField(on_update=True)
+
+    history = HistoricalRecords()
+
     class Meta:
         ordering = ['id']
 
@@ -148,10 +180,21 @@ class pago (models.Model):
     estadoregistro = models.PositiveIntegerField(choices=estaoregistroc, null=False, blank=False,
                                               help_text='Seleccione el Estado del Registro',default=0)
 
+    user_creation = CurrentUserField(related_name='pago_user_creationcc')
+    date_creation = models.DateTimeField(default=datetime.datetime.now)
+    user_last_update = CurrentUserField(on_update=True)
+
+    history = HistoricalRecords()
+
 
 class creditofinanc (models.Model):
     credito_nvo = models.ForeignKey(credito, on_delete=models.DO_NOTHING, blank=False, null=False, related_name='credito_padre')
     credito_financia = models.ForeignKey(credito, on_delete=models.DO_NOTHING, blank=False, null=False, related_name='credit_financia')
+    user_creation = CurrentUserField(related_name='credfin_user_creationcc')
+    date_creation = models.DateTimeField(default=datetime.datetime.now)
+    user_last_update = CurrentUserField(on_update=True)
+
+    history = HistoricalRecords()
 
 
 class cliente_archivo(models.Model):
@@ -159,6 +202,12 @@ class cliente_archivo(models.Model):
     archivo = models.FileField(upload_to=imagepacexp_directory_path_with_uuid)
     nombre = models.CharField(max_length=400, blank=False, null=False,help_text='Descripcion del nombre del archivo')
     fecha = models.DateTimeField(auto_now_add=True)
+
+    user_creation = CurrentUserField(related_name='clientearc_user_creationcc')
+    date_creation = models.DateTimeField(default=datetime.datetime.now)
+    user_last_update = CurrentUserField(on_update=True)
+
+    history = HistoricalRecords()
 
     class Meta:
             ordering = ['fecha']
@@ -173,6 +222,12 @@ class credito_archivo(models.Model):
     archivo = models.FileField(upload_to=imagecreexp_directory_path_with_uuid,max_length=500)
     nombre = models.CharField(max_length=400, blank=False, null=False,help_text='Descripcion del nombre del archivo')
     fecha = models.DateTimeField(auto_now_add=True)
+
+    user_creation = CurrentUserField(related_name='creditoarc_user_creationcc')
+    date_creation = models.DateTimeField(default=datetime.datetime.now)
+    user_last_update = CurrentUserField(on_update=True)
+
+    history = HistoricalRecords()
 
     class Meta:
             ordering = ['fecha']

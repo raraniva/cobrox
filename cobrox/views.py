@@ -26,6 +26,7 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.http import Http404
 from decimal import Decimal
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 from django.core.mail import  EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -43,7 +44,8 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.images import ImageFile
 from django.core.validators import validate_email
-
+import operator
+from django.contrib.auth.decorators import user_passes_test
 
 import locale
 
@@ -91,11 +93,10 @@ class Viewindex(LoginRequiredMixin, ListView):
         return super().get(request, *args, **kwargs)
 
 
-class FilialDelete(SuccessMessageMixin, PermissionRequiredMixin, DeleteView):
+class FilialDelete(SuccessMessageMixin, UserPassesTestMixin, DeleteView):
     model = filial
     success_url = reverse_lazy('cobrox:FilialList')
     form_valid_message = 'La Filial fue eliminada satisfactoriamente!'
-    permission_required = ('is_staff')
 
     def get(self, request, *args, **kwargs):
         try:
@@ -108,14 +109,16 @@ class FilialDelete(SuccessMessageMixin, PermissionRequiredMixin, DeleteView):
             my_render = reverse_lazy('cobrox:FilialList')
         return HttpResponseRedirect(my_render)
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class FilialUpdate(SuccessMessageMixin, PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
+
+class FilialUpdate(SuccessMessageMixin, UserPassesTestMixin, LoginRequiredMixin, UpdateView):
     model = filial
     form_class = FilialUpdateForm
     success_url = reverse_lazy('cobrox:FilialList')
     template_name = 'cobrox/filial_add_upd.html'
     success_message = 'Informacion del Filial Almacenada Correctamente!!!!'
-    permission_required = ('is_staff')
 
     def form_valid(self, form):
         action = self.request.POST.get('action')
@@ -123,22 +126,27 @@ class FilialUpdate(SuccessMessageMixin, PermissionRequiredMixin, LoginRequiredMi
             return super().form_valid(form)
         return HttpResponseBadRequest()
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class FilialList(PermissionRequiredMixin, ListView):
+
+class FilialList(UserPassesTestMixin, ListView):
     model = filial
     template_name = 'cobrox/filial_list.html'
-    permission_required = ('is_staff')
+    permission_required = ('user.is_staff')
 
     def get_queryset(self):
         return filial.objects.all()
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class FilialAdd(SuccessMessageMixin, PermissionRequiredMixin, CreateView):
+
+class FilialAdd(SuccessMessageMixin, UserPassesTestMixin, CreateView):
     form_class = FilialAddForm
     template_name = 'cobrox/filial_add_upd.html'
     success_url = reverse_lazy('cobrox:FilialList')
     success_message = 'Informacion del Filial Almacenada Correctamente!!!!'
-    permission_required = ('is_staff')
 
     def form_valid(self, form):
         action = self.request.POST.get('action')
@@ -147,12 +155,17 @@ class FilialAdd(SuccessMessageMixin, PermissionRequiredMixin, CreateView):
             return super().form_valid(form)
         return HttpResponseBadRequest()
     
-    
-class ZonaDelete(PermissionRequiredMixin,DeleteView):
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class ZonaDelete(UserPassesTestMixin,DeleteView):
     model = zona
     success_url = reverse_lazy('cobrox:ZonaList')
     form_valid_message = 'La Zona fue eliminada satisfactoriamente!'
-    permission_required = ('is_staff')
+
+    def test_func(self):
+        return self.request.user.is_staff
 
     def get(self, request, *args, **kwargs):
         try:
@@ -177,13 +190,15 @@ class ZonaDelete(PermissionRequiredMixin,DeleteView):
         return super().dispatch(request, *args, **kwargs)
 
 
-class ZonaUpdate(SuccessMessageMixin, PermissionRequiredMixin, UpdateView):
+class ZonaUpdate(SuccessMessageMixin, UserPassesTestMixin, UpdateView):
     model = zona
     form_class = ZonaUpdateForm
     success_url = reverse_lazy('cobrox:ZonaList')
     template_name = 'cobrox/zona_add_upd.html'
     success_message = 'Informacion de la Zona Almacenada Correctamente!!!!'
-    permission_required = ('is_staff')
+
+    def test_func(self):
+        return self.request.user.is_staff
 
     def form_valid(self, form ):
         action = self.request.POST.get('action')
@@ -203,7 +218,7 @@ class ZonaUpdate(SuccessMessageMixin, PermissionRequiredMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
 
-class ZonaList(PermissionRequiredMixin, ListView):
+class ZonaList(UserPassesTestMixin, ListView):
     model = zona
     template_name = 'cobrox/zona_list.html'
     permission_required = ('is_staff')
@@ -215,13 +230,16 @@ class ZonaList(PermissionRequiredMixin, ListView):
     #def usumed(self):
     #    return usumed.objects.get(medico=self.request.user.usumed.medico, tipo_usuario=1, rol=1)
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class ZonaAdd(SuccessMessageMixin, PermissionRequiredMixin, CreateView):
+
+class ZonaAdd(SuccessMessageMixin, UserPassesTestMixin, CreateView):
     form_class = ZonaAddForm
     template_name = 'cobrox/zona_add_upd.html'
     success_url = reverse_lazy('cobrox:ZonaList')
     success_message = 'Informacion de la Zona Almacenada Correctamente!!!!'
-    permission_required = ('is_staff')
+
 
     def form_valid(self, form ):
         action = self.request.POST.get('action')
@@ -238,12 +256,15 @@ class ZonaAdd(SuccessMessageMixin, PermissionRequiredMixin, CreateView):
         #    raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class TipoclienteDelete(SuccessMessageMixin, PermissionRequiredMixin, DeleteView):
+
+class TipoclienteDelete(SuccessMessageMixin, UserPassesTestMixin, DeleteView):
     model = tipo_cliente
     success_url = reverse_lazy('cobrox:TipoclienteList')
     form_valid_message = 'La Tipocliente fue eliminada satisfactoriamente!'
-    permission_required = ('is_staff')
+
 
     def get(self, request, *args, **kwargs):
         try:
@@ -256,14 +277,17 @@ class TipoclienteDelete(SuccessMessageMixin, PermissionRequiredMixin, DeleteView
             my_render = reverse_lazy('cobrox:TipoclienteList')
         return HttpResponseRedirect(my_render)
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class TipoclienteUpdate(SuccessMessageMixin, PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
+
+class TipoclienteUpdate(SuccessMessageMixin, UserPassesTestMixin, LoginRequiredMixin, UpdateView):
     model = tipo_cliente
     form_class = TipoclienteUpdateForm
     success_url = reverse_lazy('cobrox:TipoclienteList')
     template_name = 'cobrox/tipo_cliente_add_upd.html'
     success_message = 'Informacion del Tipocliente Almacenada Correctamente!!!!'
-    permission_required = ('is_staff')
+
 
     def form_valid(self, form):
         action = self.request.POST.get('action')
@@ -271,22 +295,28 @@ class TipoclienteUpdate(SuccessMessageMixin, PermissionRequiredMixin, LoginRequi
             return super().form_valid(form)
         return HttpResponseBadRequest()
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class TipoclienteList(PermissionRequiredMixin, ListView):
+
+class TipoclienteList(UserPassesTestMixin, ListView):
     model = tipo_cliente
     template_name = 'cobrox/tipo_cliente_list.html'
-    permission_required = ('is_staff')
+
 
     def get_queryset(self):
         return tipo_cliente.objects.all()
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class TipoclienteAdd(SuccessMessageMixin, PermissionRequiredMixin, CreateView):
+
+class TipoclienteAdd(SuccessMessageMixin, UserPassesTestMixin, CreateView):
     form_class = TipoclienteAddForm
     template_name = 'cobrox/tipo_cliente_add_upd.html'
     success_url = reverse_lazy('cobrox:TipoclienteList')
     success_message = 'Informacion del Tipocliente Almacenada Correctamente!!!!'
-    permission_required = ('is_staff')
+
 
     def form_valid(self, form):
         action = self.request.POST.get('action')
@@ -294,6 +324,9 @@ class TipoclienteAdd(SuccessMessageMixin, PermissionRequiredMixin, CreateView):
         if action == 'SAVE':
             return super().form_valid(form)
         return HttpResponseBadRequest()
+
+    def test_func(self):
+        return self.request.user.is_staff
 
 
 class ClienteDelete(LoginRequiredMixin,DeleteView):
@@ -1278,3 +1311,19 @@ class CreditoArchivoDelete(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
         if user_filial.rol.codigo == 'OPE':
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
+
+
+class ReporteCobros(LoginRequiredMixin, ListView):
+
+    template_name = "cobrox/reporte_cobro.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(ReporteCobros, self).get_context_data(**kwargs)
+        return context
+
+    def get_queryset(self):
+        return credito.objects.filter(nm_estado=1).filter(estadocredito=0).filter(estadoregistro=1).order_by("cliente__zona__nombre","fechaven","cliente__nombre",)
+
+    def get(self, request, *args, **kwargs):
+
+        return super().get(request, *args, **kwargs)

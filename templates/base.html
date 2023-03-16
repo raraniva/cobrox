@@ -67,6 +67,13 @@
                     </ul>
                 </li>
 
+                <li {% block nav-reporte %}{% endblock %}>
+                    <a href="#"><i class="fa fa-address-book"></i> <span class="nav-label">Reportes</span><span class="fa arrow"></span></a>
+                    <ul class="nav nav-second-level collapse">
+                        <li {% block nav-reporte-cobros %}{% endblock %}><a href="{% url 'cobrox:ReporteCobros' %}"><i class="fa fa-list-alt"></i>Reporte de Cobros</a></li>
+                        </ul>
+                </li>
+
                 <li {% block nav-admon %}{% endblock %}>
                     <a href="#"><i class="fa fa-address-book"></i> <span class="nav-label">Administración</span><span class="fa arrow"></span></a>
                     <ul class="nav nav-second-level collapse">

@@ -141,6 +141,10 @@ urlpatterns = [
        views.Archivos_creditoAdd.as_view(),
        name='Archivos_creditoAdd'
        ),
+    path('Reporte_Cobro/',
+       views.ReporteCobros.as_view(),
+       name='ReporteCobros'
+       ),
     path('ajax/load-calculo_pago/', views.load_calculo_pago, name='ajax_load_calculo_pago'),
     path('ajax/load-calculo_distribucion_pago/', views.load_calculo_distribucion_pago, name='ajax_load_calculo_distribucion_pago'),
     ] + static(settings.MEDIA_URL)
