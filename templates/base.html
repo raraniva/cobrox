@@ -54,7 +54,7 @@
                 </li>
 
                 <li {% block nav-resumen %}{% endblock %}>
-                    <a href="/dashboard"><i class="fa fa-th-large"></i> <span class="nav-label">Resumen</span> </a>
+                    <a href="/dashboard"><i class="fa fa-th-large"></i> <span class="nav-label">Inicio</span> </a>
                 </li>
 
                 <li {% block nav-operacion %}{% endblock %}>
@@ -71,6 +71,8 @@
                     <a href="#"><i class="fa fa-address-book"></i> <span class="nav-label">Reportes</span><span class="fa arrow"></span></a>
                     <ul class="nav nav-second-level collapse">
                         <li {% block nav-reporte-cobros %}{% endblock %}><a href="{% url 'cobrox:ReporteCobros' %}"><i class="fa fa-list-alt"></i>Reporte de Cobros</a></li>
+                        <li {% block nav-reporte-desembolsos %}{% endblock %}><a href="{% url 'cobrox:DesembolsoList' %}"><i class="fa fa-list-alt"></i>Desembolsos</a></li>
+                        <li {% block nav-reporte-pagos %}{% endblock %}><a href="{% url 'cobrox:PagoList' %}"><i class="fa fa-list-alt"></i>Pagos</a></li>
                         </ul>
                 </li>
 

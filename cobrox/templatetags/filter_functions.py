@@ -141,3 +141,9 @@ def muestra_pagos(pcredito):
 def changeZona(zonaid):
     return zonaid
 
+@register.simple_tag
+def suma_objs(mon,actual):
+    suma= (mon + actual)
+    return suma
+
+

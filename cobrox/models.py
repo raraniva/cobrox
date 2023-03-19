@@ -158,7 +158,7 @@ class credito(models.Model):
         ordering = ['id']
 
     def __str__(self):
-        return self.cliente
+        return str(self.id)
 
 
 class pago (models.Model):

@@ -2,6 +2,9 @@ from django import forms
 from .models import filial,zona,tipo_cliente,cliente,credito,pago,cliente_archivo,credito_archivo
 from django.db.models import Q
 from user.models import user_rol_filial
+from django.utils.timezone import make_aware
+from datetime import datetime
+from datetime import timedelta
 
 class FilialAddForm(forms.ModelForm):
 
@@ -214,3 +217,49 @@ class Archivos_creditoForm(forms.ModelForm):
                    'nombre': forms.HiddenInput(),
                     'archivo' : forms.FileInput(attrs={'accept':'.png, .jpg, .jpeg'})}
                    #'file' : forms.FileInput(attrs={'accept':'.png, .jpg, .jpeg'})}
+
+
+class ConsultaDesembolsoSearchForm(forms.Form):
+    fecha_ini = forms.CharField(required=True)
+    fecha_fin = forms.CharField(required=True)
+    export_field = forms.BooleanField(required=False, widget=forms.CheckboxInput())
+
+    def filter_queryset(self, request, queryset):
+        if self.cleaned_data['fecha_ini']:
+            fecha_ini = self.cleaned_data['fecha_ini']
+            fecha_fin = self.cleaned_data['fecha_fin']
+            if fecha_ini:
+                aware_ini = make_aware(datetime.strptime(fecha_ini, '%Y-%m-%d'))
+            else:
+                aware_ini = None
+
+            if fecha_fin:
+                aware_fin = make_aware(datetime.strptime(fecha_fin, '%Y-%m-%d'))
+            else:
+                aware_fin = None
+            return queryset.filter(fechaini__range = (aware_ini,aware_fin))
+        return queryset.filter(fechaini__range = (make_aware(datetime.strptime(datetime.now(), '%Y-%m-%d')),
+                                               make_aware(datetime.strptime(datetime.now(), '%Y-%m-%d'))))
+
+
+class ConsultaPagoSearchForm(forms.Form):
+    fecha_ini = forms.CharField(required=True)
+    fecha_fin = forms.CharField(required=True)
+    export_field = forms.BooleanField(required=False, widget=forms.CheckboxInput())
+
+    def filter_queryset(self, request, queryset):
+        if self.cleaned_data['fecha_ini']:
+            fecha_ini = self.cleaned_data['fecha_ini']
+            fecha_fin = self.cleaned_data['fecha_fin']
+            if fecha_ini:
+                aware_ini = make_aware(datetime.strptime(fecha_ini, '%Y-%m-%d'))
+            else:
+                aware_ini = None
+
+            if fecha_fin:
+                aware_fin = make_aware(datetime.strptime(fecha_fin, '%Y-%m-%d'))
+            else:
+                aware_fin = None
+            return queryset.filter(fecha__range = (aware_ini,aware_fin))
+        return queryset.filter(fecha__range = (make_aware(datetime.strptime(datetime.now(), '%Y-%m-%d')),
+                                               make_aware(datetime.strptime(datetime.now(), '%Y-%m-%d'))))

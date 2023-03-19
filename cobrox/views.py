@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.template import loader
 from django.core.mail import send_mail
 from django.views.generic import (ListView,DetailView,CreateView,UpdateView,DeleteView)
@@ -7,7 +7,7 @@ from .models import filial,zona,tipo_cliente,cliente,credito,pago,creditofinanc,
 from .forms import FilialAddForm,\
     FilialUpdateForm,ZonaAddForm,ZonaUpdateForm,TipoclienteAddForm,\
     TipoclienteUpdateForm,ClienteAddForm,ClienteUpdateForm,ClienteSearchForm,CreditoAddForm,PagoAddForm,CreditoSearchForm,\
-    Archivos_clienteForm,Archivos_creditoForm
+    Archivos_clienteForm,Archivos_creditoForm,ConsultaDesembolsoSearchForm,ConsultaPagoSearchForm
 from datetime import timedelta
 from django.views.generic.edit import FormMixin,FormView
 from user.models import user_rol_filial
@@ -27,7 +27,7 @@ from django.db import IntegrityError
 from django.http import Http404
 from decimal import Decimal
 from django.contrib.auth.mixins import UserPassesTestMixin
-
+from django.template.loader import get_template
 from django.core.mail import  EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -48,6 +48,7 @@ import operator
 from django.contrib.auth.decorators import user_passes_test
 
 import locale
+import csv
 
 from io import BytesIO
 from urllib.request import urlopen
@@ -1322,8 +1323,134 @@ class ReporteCobros(LoginRequiredMixin, ListView):
         return context
 
     def get_queryset(self):
-        return credito.objects.filter(nm_estado=1).filter(estadocredito=0).filter(estadoregistro=1).order_by("cliente__zona__nombre","fechaven","cliente__nombre",)
+        if self.request.user.is_staff:
+            qry = credito.objects.filter(nm_estado=1).filter(estadocredito=0).filter(estadoregistro=1).order_by("cliente__zona__nombre","fechaven","cliente__nombre",)
+        else:
+            obj = user_rol_filial.objects.get(usuario=self.request.user)
+            qry = qry = credito.objects.filter(zona__filial=obj.filial).filter(nm_estado=1).filter(estadocredito=0).filter(estadoregistro=1).order_by("cliente__zona__nombre","fechaven","cliente__nombre",)
+        return qry
 
     def get(self, request, *args, **kwargs):
+        #self.object = self.get_object(queryset=self.get_queryset())
+        #return self.render_to_response(self.get_context_data(object=self.object))
 
         return super().get(request, *args, **kwargs)
+
+
+class DesembolsoList(LoginRequiredMixin, FormMixin,ListView):
+
+    form_class = ConsultaDesembolsoSearchForm
+    template_name = 'cobrox/desembolso_list.html'
+    ajax_template_name = 'cobrox/desembolso_list_results.html'
+
+    def get_initial(self):
+        return {
+            'codigo_id': '',
+        }
+
+    def user_rol_filial(self):
+        return user_rol_filial.objects.get(usuario=self.request.user)
+
+    def get_queryset(self):
+
+        if self.request.user.is_staff:
+            qry = credito.objects.filter(nm_estado = 1).order_by("id")
+        else:
+            obj = user_rol_filial.objects.get(usuario=self.request.user)
+            qry = credito.objects.filter(cliente__zona__filial=obj.filial).filter(nm_estado = 1).order_by("id")
+        return qry
+
+    def get_template_names(self):
+        if self.request.is_ajax():
+            return [self.ajax_template_name]
+        return [self.template_name]
+
+    def get_form_kwargs(self):
+        return {
+            'initial': self.get_initial(),
+            'prefix': self.get_prefix(),
+            'data': self.request.GET or None
+        }
+
+    def get(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        form = self.get_form(self.get_form_class())
+        if form.is_valid():
+            self.object_list = form.filter_queryset(request, self.object_list)
+            if form.cleaned_data['export_field']:
+                return create_csv( self.object_list,'desembolsos')
+        context = self.get_context_data(form=form, object_list=self.object_list)
+        return self.render_to_response(context)
+
+
+class PagoList(LoginRequiredMixin, FormMixin,ListView):
+
+    form_class = ConsultaPagoSearchForm
+    template_name = 'cobrox/pago_list.html'
+    ajax_template_name = 'cobrox/pago_list_results.html'
+
+    def get_initial(self):
+        return {
+            'codigo_id': '',
+        }
+
+    def form_valid(self, form):
+        action = self.request.POST.get('action')
+        if action == 'SAVE':
+
+            return super().form_valid(form)
+        #return HttpResponseBadRequest()
+
+    def user_rol_filial(self):
+        return user_rol_filial.objects.get(usuario=self.request.user)
+
+    def get_queryset(self):
+
+        if self.request.user.is_staff:
+            qry = pago.objects.filter(credito__nm_estado = 1).order_by("id")
+        else:
+            obj = user_rol_filial.objects.get(usuario=self.request.user)
+            qry = pago.objects.filter(credito__cliente__zona__filial=obj.filial).filter(credito__nm_estado = 1).order_by("id")
+        return qry
+
+    def get_template_names(self):
+        if self.request.is_ajax():
+            return [self.ajax_template_name]
+        return [self.template_name]
+
+    def get_form_kwargs(self):
+        return {
+            'initial': self.get_initial(),
+            'prefix': self.get_prefix(),
+            'data': self.request.GET or None
+        }
+
+    def get(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        form = self.get_form(self.get_form_class())
+        if form.is_valid():
+            self.object_list = form.filter_queryset(request, self.object_list)
+            if form.cleaned_data['export_field']:
+                return create_csv( self.object_list,'pagos')
+        context = self.get_context_data(form=form, object_list=self.object_list)
+        return self.render_to_response(context)
+
+
+def create_csv(queryset,filename):
+
+    response = HttpResponse(
+        content_type='text/csv',
+        headers={'Content-Disposition': 'attachment; filename="'+ filename + '.csv"'},
+    )
+
+    writer = csv.writer(response)
+    writer.writerow([field.name for field in queryset.model._meta.fields])
+
+    for obj in queryset:
+        row = []
+        for field in obj._meta.fields:
+            value = getattr(obj, field.name)
+            row.append(value)
+        writer.writerow(row)
+
+    return response

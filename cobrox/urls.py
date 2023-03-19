@@ -14,6 +14,10 @@ urlpatterns = [
          views.Viewindex.as_view(),
          name='index'
         ),
+    path('dashboard',
+         views.Viewindex.as_view(),
+         name='dashboard'
+        ),
     path('filial',
        views.FilialList.as_view(),
        name='FilialList'
@@ -145,6 +149,16 @@ urlpatterns = [
        views.ReporteCobros.as_view(),
        name='ReporteCobros'
        ),
+    path('DesembolsoList/',
+       views.DesembolsoList.as_view(),
+       name='DesembolsoList'
+       ),
+    path('PagoList/',
+       views.PagoList.as_view(),
+       name='PagoList'
+       ),
+
+
     path('ajax/load-calculo_pago/', views.load_calculo_pago, name='ajax_load_calculo_pago'),
     path('ajax/load-calculo_distribucion_pago/', views.load_calculo_distribucion_pago, name='ajax_load_calculo_distribucion_pago'),
     ] + static(settings.MEDIA_URL)

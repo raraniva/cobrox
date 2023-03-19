@@ -1,0 +1,73 @@
+{% load humanize %}
+{% load filter_functions %}
+<div class="results">
+                <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tipo</th>
+                    <th>Cliente</th>
+                    <th>Fecha <br> Inicio</th>
+                    <th>Fecha <br> Vcto.</th>
+                    <th>Qty <br>Cuotas </th>
+                    <th>Tasa <br> interés</th>
+                    <th>Monto <br>Otorgado</th>
+                    <th>Cuota</th>
+                    <th>Cuotas <br>Pendientes </th>
+                    <th>Saldo <br>Pendiente</th>
+                </tr>
+                </thead>
+                    <tbody>
+                    {% with sum_montootorgado=0 sum_saldopendiente=0%}
+
+
+
+
+
+
+                    {% for obj in object_list %}
+                        {% suma_objs obj.montootorgado sum_montootorgado as sum_montootorgado %}
+                       {% suma_objs obj.saldopendiente sum_saldopendiente as sum_saldopendiente %}
+                        <tr>
+                            <td> {{ obj.id|stringformat:"06d" }}</td>
+                            <td>
+
+                               {% if obj.tipocredito == 0 %}
+                                    <span class="badge badge-primary">C</span>&nbsp;{{ obj.get_tipocredito_display }}
+                                {% else %}
+                                    <span class="badge badge-success">R</span>&nbsp;{{ obj.get_tipocredito_display }}
+                                {% endif %}
+
+                            </td>
+                            <td> {{ obj.cliente.nombre }} </td>
+                            <td> {{ obj.fechaini }} </td>
+                            <td> {{ obj.fechaven }} </td>
+                            <td> {{ obj.qtydiascuota }} </td>
+                            <td> {{ obj.interespct }} % </td>
+                            <td align="right">$ {{ obj.montootorgado|intcomma }}</td>
+
+
+                            <td align="right">$ {{ obj.totalcuota }} </td>
+                            <td align="right"> {{ obj.cuotaspendientes}} </td>
+                            <td align="right">$ {{ obj.saldopendiente|intcomma }} </td>
+                        </tr>
+                            {% if forloop.last %}
+                    <tr><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td align="right"><strong>$ {{ sum_montootorgado|intcomma }}</strong></td><td> </td><td> </td>
+                        <td align="right"><strong>$ {{ sum_saldopendiente|intcomma }}</strong></td></tr>
+                            {% endif %}
+
+                        {% empty %}
+                        <tr>
+                            <td> No existen créditos registrados </td>
+                        </tr>
+
+                    {% endfor %}
+
+
+
+                    {% endwith %}
+
+                </tbody>
+                </table>
+</div>
+
