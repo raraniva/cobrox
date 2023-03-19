@@ -518,6 +518,9 @@ class CreditoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
         context['tip'] = 1
         context['izq'] = 0
         context['medio'] = 8
+        context['opcion_name'] = 'Introduzca los datos del crédito:'
+        context['object_list'] = credito.objects.filter(cliente__id=self.kwargs['pk'])\
+            .filter(estadocredito=0).order_by("-id")
 
         return context;
 
@@ -1064,6 +1067,7 @@ class FinanciamientoAdd(SuccessMessageMixin, LoginRequiredMixin, CreateView):
         context['tip'] = 0
         context['izq'] = 12
         context['medio'] = 8
+        context['opcion_name'] = 'Introduzca los datos del refinanciamiento:'
 
         return context;
 
@@ -1198,7 +1202,9 @@ class ClienteArchivoDelete(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
         try:
             obj = cliente_archivo.objects.get(id=self.kwargs['pk'])
             clien = obj.cliente
-            obj.delete()
+            with transaction.atomic():
+                obj.archivo.delete()
+                obj.delete()
             messages.success(request, "El archivo ha sido eliminado satisfactoriamente.")
 
 
@@ -1285,7 +1291,9 @@ class CreditoArchivoDelete(SuccessMessageMixin, LoginRequiredMixin, DeleteView):
         try:
             obj = credito_archivo.objects.get(id=self.kwargs['pk'])
             cred = obj.credito
-            obj.delete()
+            with transaction.atomic():
+                obj.archivo.delete()
+                obj.delete()
             messages.success(request, "El archivo ha sido eliminado satisfactoriamente.")
 
             my_render = reverse('cobrox:Archivos_creditoAdd',

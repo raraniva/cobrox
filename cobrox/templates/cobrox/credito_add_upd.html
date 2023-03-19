@@ -11,17 +11,6 @@
 {% block title %}{% endblock %}
 
 {% block main %}
-{% if tip == 0 %}
-<div class="row">
-    <div class="col-lg-12">
-            <div class="ibox">
-                <div class="ibox-content">
-                    <h3><i class="fa fa-legal"></i> REFINANCIAMIENTO </h3>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endif %}
 
 <div class="row">
         {% if tip == 0 %}
@@ -32,7 +21,7 @@
     <form method="post" id="orderForm"  enctype="multipart/form-data" data-lista-url="{% url 'cobrox:ajax_load_calculo_pago' %}">
     <div class="ibox">
         <div class="ibox-title">
-            <h5>Introduzca los Datos del Crédito</h5>
+            <h5>{{ opcion_name }}</h5>
 
         </div>
          <div class="ibox-content">
@@ -187,34 +176,74 @@
                                 </div>
                             </div>
                         {% else %}
-                            <p>
-                            <p><i class="fa fa-map-marker"></i> {{ view.cliente.direccion }}, {{ view.cliente.zona }}</p>
-                            <p><i class="fa fa-drivers-license"></i>  {{ view.cliente.dui }}</p>
-                            <p><i class="fa fa-vcard"></i>  {{ view.cliente.nit }}</p>
-                            <p><i class="fa fa-phone"></i>  {{ view.cliente.telefono }}</p>
+
+                            <p><i class="fa fa-map-marker"></i> <small>{{ view.cliente.direccion }}, {{ view.cliente.zona }}
+                            &nbsp;&nbsp;<i class="fa fa-tag"></i>  {{ view.cliente.tipo_cliente }}</small>
+                            </p>
+                            <p><i class="fa fa-drivers-license"></i><small>  {{ view.cliente.dui }}</small> &nbsp;&nbsp;
+                            <i class="fa fa-vcard"></i><small>  {{ view.cliente.nit }}</small></p>
+                            <p><i class="fa fa-phone"></i><small>  {{ view.cliente.telefono }}&nbsp;&nbsp;
                             {% if view.cliente.celular %}
-                                <p><i class="fa fa-mobile"></i>  {{ view.cliente.celular }}</p>
+                                <i class="fa fa-mobile"></i>  {{ view.cliente.celular }}
                             {% endif %}
-                            <p><i class="fa fa-tag"></i>  {{ view.cliente.tipo_cliente }}</p>
+                            </small>
+                            </p>
+                            <p></p>
                             {% if view.cliente.codigo %}
-                                <p><i class="fa fa-archive"></i>  {{ view.cliente.codigo }}</p>
+                                <p><i class="fa fa-archive"></i><small>  {{ view.cliente.codigo }}</small></p>
                             {% endif %}
-                        </p>
+
+                            {% if view.cliente.observacion %}
+                                <p><div class="alert alert-warning alert-dismissable">
+                                            <strong><i class="fa fa-comments"></i><small> Observación:</small> </strong>
+                                            <p><small>{{ view.cliente.observacion }}</small></p>
+                                </div></p>
+                            {% endif %}
+
+                            <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th><small><strong>Estado</strong></small></th>
+                                <th><small><strong>ID</strong></small></th>
+                                <th><small><strong>Monto <br>Otorgado</strong></small></th>
+                                <th><small><strong>Saldo <br>Pendiente</strong></small></th>
+
+                            </tr>
+                            </thead>
+                                <tbody>
+                                {% for obj in object_list %}
+                                    <tr>
+                                        <td><small>
+                                            {% revigenciaestadocredito obj.saldopendiente obj.fechaven obj.estadocredito as liked_by_user_flag %}
+                                            {% if liked_by_user_flag == 0  %}
+                                                <span class="badge badge-info"><i class="fa fa-gear"></i> <small>Vigente </small></span>
+                                            {% else  %}
+                                                <span class="badge badge-warning"><i class="fa fa-warning"></i> <small>Vencido </small></span>
+
+                                            {% endif %}
+                                            </small>
+                                        </td>
+                                        <td><small> {{ obj.id|stringformat:"06d" }}</small></td>
+
+                                        <td align="right"><small>$ {{ obj.montootorgado|intcomma }}</small></td>
+                                        <td align="right"><small>$ {{ obj.saldopendiente }}</small> </td>
+                                        {% empty %}
+                                        <td> No existen créditos registrados vigentes </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            </table>
+
 
                         {% endif %}
+                        <br>
                         <a href="{% url 'cobrox:Credito_clientelist' pk=view.cliente.id %}"  >
                         <span class="badge badge-primary"><h4> <i class="fa fa-backward"></i> Regresar a Clientes</h4></span>
                          </a>
-                        <p>
 
-                                {% if view.cliente.observacion %}
-                                <p><div class="alert alert-warning alert-dismissable">
-                                            <strong><i class="fa fa-comments"></i> Observación: </strong>
-                                            <p>{{ view.cliente.observacion }}</p>
-                                </div></p>
-                                {% endif %}
 
-                         </p>
+
+
 
                     </div>
                 </div>
