@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy,reverse
 from django.views.generic import CreateView,FormView,DetailView
-
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.db.models.query_utils import Q
@@ -80,11 +80,10 @@ def change_password(request):
     })
 
 
-class RolDelete(SuccessMessageMixin, PermissionRequiredMixin, DeleteView):
+class RolDelete(SuccessMessageMixin, UserPassesTestMixin, DeleteView):
     model = rol
     success_url = reverse_lazy('user:RolList')
     form_valid_message = 'El Rol fue eliminada satisfactoriamente!'
-    permission_required = ('is_staff')
 
     def get(self, request, *args, **kwargs):
         try:
@@ -97,14 +96,16 @@ class RolDelete(SuccessMessageMixin, PermissionRequiredMixin, DeleteView):
             my_render = reverse_lazy('user:RolList')
         return HttpResponseRedirect(my_render)
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class RolUpdate(SuccessMessageMixin, PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
+
+class RolUpdate(SuccessMessageMixin, UserPassesTestMixin, LoginRequiredMixin, UpdateView):
     model = rol
     form_class = RolUpdateForm
     success_url = reverse_lazy('user:RolList')
     template_name = 'user/rol_add_upd.html'
     success_message = 'Informacion del Rol Almacenada Correctamente!!!!'
-    permission_required = ('is_staff')
 
     def form_valid(self, form):
         action = self.request.POST.get('action')
@@ -112,22 +113,26 @@ class RolUpdate(SuccessMessageMixin, PermissionRequiredMixin, LoginRequiredMixin
             return super().form_valid(form)
         return HttpResponseBadRequest()
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class RolList(PermissionRequiredMixin, ListView):
+
+class RolList(UserPassesTestMixin, ListView):
     model = rol
     template_name = 'user/rol_list.html'
-    permission_required = ('is_staff')
 
     def get_queryset(self):
         return rol.objects.all().order_by("id")
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class RolAdd(SuccessMessageMixin, PermissionRequiredMixin, CreateView):
+
+class RolAdd(SuccessMessageMixin, UserPassesTestMixin, CreateView):
     form_class = RolAddForm
     template_name = 'user/rol_add_upd.html'
     success_url = reverse_lazy('user:RolList')
     success_message = 'Informacion del Rol Almacenada Correctamente!!!!'
-    permission_required = ('is_staff')
 
     def form_valid(self, form):
         action = self.request.POST.get('action')
@@ -136,12 +141,14 @@ class RolAdd(SuccessMessageMixin, PermissionRequiredMixin, CreateView):
             return super().form_valid(form)
         return HttpResponseBadRequest()
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class UserDelete(SuccessMessageMixin, PermissionRequiredMixin, DeleteView):
+
+class UserDelete(SuccessMessageMixin, UserPassesTestMixin, DeleteView):
     model = User
     success_url = reverse_lazy('user:UserList')
     form_valid_message = 'El User fué eliminado satisfactoriamente!'
-    permission_required = ('is_staff')
 
     def get(self, request, *args, **kwargs):
         try:
@@ -179,14 +186,16 @@ class UserDelete(SuccessMessageMixin, PermissionRequiredMixin, DeleteView):
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class UserUpdate(SuccessMessageMixin, PermissionRequiredMixin, LoginRequiredMixin, UpdateView):
+
+class UserUpdate(SuccessMessageMixin, UserPassesTestMixin, LoginRequiredMixin, UpdateView):
     model = User
     form_class = UserUpdateForm
     success_url = reverse_lazy('user:UserList')
     template_name = 'user/user_add_upd.html'
     success_message = 'Información del User Almacenada Correctamente!!!!'
-    permission_required = ('is_staff')
 
     def form_valid(self, form):
         action = self.request.POST.get('action')
@@ -216,22 +225,26 @@ class UserUpdate(SuccessMessageMixin, PermissionRequiredMixin, LoginRequiredMixi
             None
         return initial
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class UserList(PermissionRequiredMixin, ListView):
+
+class UserList(UserPassesTestMixin, ListView):
     model = User
     template_name = 'user/user_list.html'
-    permission_required = ('is_staff')
 
     def get_queryset(self):
         return User.objects.all().order_by("last_name","id")
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class UserAdd(SuccessMessageMixin, PermissionRequiredMixin, CreateView):
+
+class UserAdd(SuccessMessageMixin, UserPassesTestMixin, CreateView):
     form_class = UserAddForm
     template_name = 'user/User_add_upd.html'
     success_url = reverse_lazy('user:UserList')
     success_message = 'Informacion del User Almacenada Correctamente!!!!'
-    permission_required = ('is_staff')
 
     def form_valid(self, form):
         action = self.request.POST.get('action')
@@ -249,6 +262,9 @@ class UserAdd(SuccessMessageMixin, PermissionRequiredMixin, CreateView):
         return reverse('user:PasswordResetConfirmView',
                        kwargs={'pk':self.object.id}
                        )
+
+    def test_func(self):
+        return self.request.user.is_staff
 
 
 class PasswordResetConfirmView(FormView):
@@ -289,10 +305,9 @@ class PasswordResetConfirmView(FormView):
         return super().dispatch(request, *args, **kwargs)
 
 
-class CambiarEstado(PermissionRequiredMixin,DetailView):
+class CambiarEstado(UserPassesTestMixin,DetailView):
     success_url = reverse_lazy('user:UserList')
     form_valid_message = 'El registro fue actualizado satisfactoriamente!'
-    permission_required = ('is_staff')
 
     def get(self, request, *args, **kwargs):
         obj = User.objects.get(id=self.kwargs['pk'])
@@ -325,11 +340,13 @@ class CambiarEstado(PermissionRequiredMixin,DetailView):
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-class CambiarTipo(PermissionRequiredMixin,DetailView):
+
+class CambiarTipo(UserPassesTestMixin,DetailView):
     success_url = reverse_lazy('user:UserList')
     form_valid_message = 'El registro fue actualizado satisfactoriamente!'
-    permission_required = ('is_staff')
 
     def get(self, request, *args, **kwargs):
 
@@ -363,3 +380,6 @@ class CambiarTipo(PermissionRequiredMixin,DetailView):
         if not request.user.is_staff:
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
+
+    def test_func(self):
+        return self.request.user.is_staff
