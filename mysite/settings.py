@@ -97,7 +97,7 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL', default="postgres://postgres:%s@127.0.0.1:5432/micobroxdb" % r"holahola")
+        default=config('DATABASE_URL', default="postgres://postgres:%s@127.0.0.1:5432/micobroxdbxio" % r"holahola")
     )
 }
 
